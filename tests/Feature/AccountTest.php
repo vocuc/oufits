@@ -113,4 +113,14 @@ class AccountTest extends TestCase
         $this->assertNotEmpty($token);
         $this->assertSame(hash('sha256', $token), $user->fresh()->api_token);
     }
+
+    public function test_header_shows_account_menu(): void
+    {
+        $user = User::factory()->create(['name' => 'Lan', 'email' => 'lan@example.com']);
+        $user->outfits()->create(['title' => 'A', 'items' => '- Áo']);
+        $user->outfits()->create(['title' => 'B', 'items' => '- Váy']);
+
+        $this->actingAs($user)->get('/')->assertOk()
+            ->assertSeeInOrder(['account__toggle', 'Lan', 'lan@example.com', '2 outfit', 'Prompt dùng chung', 'Đăng xuất'], false);
+    }
 }

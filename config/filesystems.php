@@ -28,6 +28,9 @@ return [
     |
     */
 
+    // Disk lưu ảnh bìa outfit (key: ootd/{user_id}/{uuid}.ext).
+    'cover_disk' => env('COVER_DISK', 's3'),
+
     'disks' => [
 
         'local' => [

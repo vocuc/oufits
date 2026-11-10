@@ -13,13 +13,28 @@
         <div class="wrap topbar__inner">
             <a href="{{ auth()->check() ? route('outfits.index') : route('login') }}" class="brand">OOTD<span>prompt</span></a>
             @auth
+                @php($me = auth()->user())
                 <nav class="nav">
-                    <a href="{{ route('settings.edit') }}" class="nav__link">Prompt dùng chung</a>
-                    <a href="{{ route('outfits.create') }}" class="btn btn--primary">+ Thêm outfit</a>
-                    <form method="post" action="{{ route('logout') }}">
-                        @csrf
-                        <button class="btn" title="{{ auth()->user()->email }}">Đăng xuất</button>
-                    </form>
+                    <details class="account" data-account>
+                        <summary class="account__toggle" aria-label="Tài khoản">
+                            <span class="account__avatar">{{ mb_strtoupper(mb_substr($me->name ?: $me->email, 0, 1)) }}</span>
+                            <span class="account__name">{{ $me->name ?: $me->email }}</span>
+                            <span class="account__caret" aria-hidden="true">▾</span>
+                        </summary>
+                        <div class="account__menu">
+                            <div class="account__info">
+                                <b>{{ $me->name }}</b>
+                                <span class="muted">{{ $me->email }}</span>
+                                <span class="muted">{{ $me->outfits()->count() }} outfit</span>
+                            </div>
+                            <a href="{{ route('outfits.create') }}" class="account__item">+ Thêm outfit</a>
+                            <a href="{{ route('settings.edit') }}" class="account__item">Prompt dùng chung</a>
+                            <form method="post" action="{{ route('logout') }}">
+                                @csrf
+                                <button class="account__item account__item--danger">Đăng xuất</button>
+                            </form>
+                        </div>
+                    </details>
                 </nav>
             @else
                 <nav class="nav">
@@ -39,6 +54,14 @@
     </main>
 
     <script>
+        // Đóng menu tài khoản khi bấm ra ngoài hoặc nhấn Esc
+        document.addEventListener('click', (e) => {
+            document.querySelectorAll('[data-account][open]').forEach((d) => { if (!d.contains(e.target)) d.open = false; });
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') document.querySelectorAll('[data-account][open]').forEach((d) => { d.open = false; });
+        });
+
         document.addEventListener('click', async (e) => {
             const btn = e.target.closest('[data-copy]');
             if (!btn) return;

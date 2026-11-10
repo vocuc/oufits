@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Support\CoverImage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -52,22 +54,35 @@ class Outfit extends Model
         Hashtag::pruneUnused();
     }
 
-    /** Lưu ảnh bìa mới (xóa ảnh cũ nếu có). */
+    /** Disk lưu ảnh bìa (mặc định S3, đổi bằng COVER_DISK). */
+    public static function coverDisk(): FilesystemAdapter
+    {
+        return Storage::disk(config('filesystems.cover_disk'));
+    }
+
+    /** Thu nhỏ (tối đa 600px, WebP) rồi lưu ảnh bìa vào ootd/{user_id}/ (xóa ảnh cũ nếu có). */
     public function replaceCover(UploadedFile $file): void
     {
         $old = $this->cover_path;
-        $this->cover_path = $file->storeAs('covers', Str::uuid().'.'.$file->extension(), 'local');
+        $path = 'ootd/'.($this->user_id ?? 0).'/'.Str::uuid().'.webp';
+        $saved = static::coverDisk()->put($path, CoverImage::optimize($file), [
+            'visibility' => 'private',
+            'ContentType' => 'image/webp',
+        ]);
+        throw_unless($saved, \RuntimeException::class, 'Không lưu được ảnh bìa.');
+
+        $this->cover_path = $path;
         $this->save();
 
         if ($old) {
-            Storage::disk('local')->delete($old);
+            static::coverDisk()->delete($old);
         }
     }
 
     public function removeCover(): void
     {
         if ($this->cover_path) {
-            Storage::disk('local')->delete($this->cover_path);
+            static::coverDisk()->delete($this->cover_path);
             $this->forceFill(['cover_path' => null])->save();
         }
     }
@@ -84,7 +99,7 @@ class Outfit extends Model
     {
         static::deleted(function (Outfit $outfit) {
             if ($outfit->cover_path) {
-                Storage::disk('local')->delete($outfit->cover_path);
+                static::coverDisk()->delete($outfit->cover_path);
             }
             Hashtag::pruneUnused();
         });

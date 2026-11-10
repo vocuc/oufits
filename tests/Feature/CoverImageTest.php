@@ -15,7 +15,8 @@ class CoverImageTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Storage::fake('local');
+        config(['filesystems.cover_disk' => 'covers-test']);
+        Storage::fake('covers-test');
     }
 
     private function payload(array $extra = []): array
@@ -32,11 +33,11 @@ class CoverImageTest extends TestCase
         ]))->assertRedirect();
 
         $outfit = $user->outfits()->first();
-        $this->assertNotNull($outfit->cover_path);
-        Storage::disk('local')->assertExists($outfit->cover_path);
+        $this->assertStringStartsWith("ootd/{$user->id}/", $outfit->cover_path);
+        Storage::disk('covers-test')->assertExists($outfit->cover_path);
 
         $this->get('/')->assertSee($outfit->coverUrl(), false);
-        $this->get($outfit->coverUrl())->assertOk();
+        $this->get($outfit->coverUrl())->assertRedirect();
     }
 
     public function test_replace_and_remove_cover_deletes_old_files(): void
@@ -51,11 +52,11 @@ class CoverImageTest extends TestCase
         ]));
         $second = $outfit->fresh()->cover_path;
         $this->assertNotSame($first, $second);
-        Storage::disk('local')->assertMissing($first);
+        Storage::disk('covers-test')->assertMissing($first);
 
         $this->put(route('outfits.update', $outfit), $this->payload(['remove_cover' => '1']));
         $this->assertNull($outfit->fresh()->cover_path);
-        Storage::disk('local')->assertMissing($second);
+        Storage::disk('covers-test')->assertMissing($second);
     }
 
     public function test_deleting_outfit_deletes_cover_file(): void
@@ -66,7 +67,7 @@ class CoverImageTest extends TestCase
         $path = $outfit->cover_path;
 
         $this->actingAs($user)->delete(route('outfits.destroy', $outfit));
-        Storage::disk('local')->assertMissing($path);
+        Storage::disk('covers-test')->assertMissing($path);
     }
 
     public function test_rejects_non_image(): void
@@ -108,5 +109,21 @@ class CoverImageTest extends TestCase
         $this->withToken($token)->post('/api/outfits', $this->payload([
             'cover' => UploadedFile::fake()->image('c.jpg'),
         ]), ['Accept' => 'application/json'])->assertCreated()->assertJsonPath('data.has_cover', true);
+    }
+
+    public function test_cover_is_resized_to_600px_webp(): void
+    {
+        $user = User::factory()->create();
+        $outfit = $user->outfits()->create(['title' => 'A', 'items' => '- Áo']);
+
+        $outfit->replaceCover(UploadedFile::fake()->image('big.jpg', 2000, 1500));
+
+        $this->assertStringEndsWith('.webp', $outfit->cover_path);
+        [$w, $h, $type] = getimagesizefromstring(Storage::disk('covers-test')->get($outfit->cover_path));
+        $this->assertSame([600, 450, IMAGETYPE_WEBP], [$w, $h, $type]);
+
+        $outfit->replaceCover(UploadedFile::fake()->image('small.png', 300, 400));
+        [$w, $h] = getimagesizefromstring(Storage::disk('covers-test')->get($outfit->cover_path));
+        $this->assertSame([300, 400], [$w, $h]); // ảnh nhỏ không bị phóng to
     }
 }

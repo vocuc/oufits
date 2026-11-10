@@ -80,6 +80,8 @@ main { padding-top: 20px; padding-bottom: 48px; }
 .clear { font-size: 13px; color: var(--muted); margin-left: 4px; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip[hidden], .chips__empty[hidden] { display: none; }
+.chips__empty { font-size: 13px; }
 .chip {
     display: inline-flex; align-items: center; gap: 4px;
     padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line);
@@ -94,7 +96,11 @@ main { padding-top: 20px; padding-bottom: 48px; }
 .empty { padding: 48px 16px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius); }
 
 /* Cards */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.wrap:has(.grid) { max-width: 1440px; }
+@media (max-width: 1200px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 960px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .card {
     position: relative; display: flex; flex-direction: column; gap: 10px;
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px;
@@ -194,3 +200,39 @@ main { padding-top: 20px; padding-bottom: 48px; }
 .cover-field { display: grid; gap: 10px; }
 .cover-field__img { width: 160px; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--line); }
 .form input[type="file"] { padding: 8px; }
+
+/* Menu tài khoản trên header */
+.account { position: relative; }
+.account__toggle {
+    display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none;
+    padding: 4px 10px 4px 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+}
+.account__toggle::-webkit-details-marker { display: none; }
+.account__toggle:hover, .account[open] .account__toggle { border-color: var(--muted); }
+.account__avatar {
+    width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 14px;
+}
+.account__name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
+.account__caret { color: var(--muted); font-size: 12px; transition: transform .15s; }
+.account[open] .account__caret { transform: rotate(180deg); }
+.account__menu {
+    position: absolute; right: 0; top: calc(100% + 8px); min-width: 240px; z-index: 20;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .12); padding: 6px; display: grid;
+}
+.account__info { display: grid; gap: 2px; padding: 10px 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px; font-size: 13px; overflow-wrap: anywhere; }
+.account__info b { font-size: 14px; }
+.account__item {
+    display: block; width: 100%; text-align: left; padding: 9px 12px; border-radius: 8px; border: 0;
+    background: none; color: var(--text); font: inherit; font-size: 14px; text-decoration: none; cursor: pointer;
+}
+.account__item:hover { background: var(--accent-soft); }
+.account__item--danger { color: var(--danger); }
+@media (max-width: 640px) {
+    .account__name { display: none; }
+    .account__toggle { padding-right: 8px; }
+}
+
+/* Tải thêm outfit khi cuộn */
+.loadmore { display: flex; justify-content: center; padding: 24px 0 8px; }

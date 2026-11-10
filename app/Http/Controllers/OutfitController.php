@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Storage;
 /** Mọi thao tác chỉ trên outfit của tài khoản đang đăng nhập. */
 class OutfitController extends Controller
 {
+    private const FIRST_PAGE = 30;
+
+    private const MORE_PAGE = 20;
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -22,11 +26,23 @@ class OutfitController extends Controller
             ->map(fn ($t) => Hashtag::normalize($t))
             ->filter()->unique()->values()->all();
 
-        $outfits = $user->outfits()
-            ->with('hashtags')
-            ->withAllHashtags($selected)
-            ->latest()
+        // Trang đầu 30 outfit mới nhất, cuộn xuống tải thêm 20 mỗi lần (?offset=)
+        $offset = max(0, (int) $request->query('offset', 0));
+        $limit = $offset === 0 ? self::FIRST_PAGE : self::MORE_PAGE;
+        $query = $user->outfits()->withAllHashtags($selected);
+        $total = (clone $query)->count();
+        $outfits = $query->with('hashtags')
+            ->orderByDesc('created_at')->orderByDesc('id')
+            ->skip($offset)->take($limit)
             ->get();
+        $nextOffset = $offset + $outfits->count() < $total ? $offset + $outfits->count() : null;
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'html' => view('outfits._cards', compact('outfits', 'selected'))->render(),
+                'next_offset' => $nextOffset,
+            ]);
+        }
 
         // Chỉ đếm hashtag trên outfit của tài khoản này
         $mine = fn (Builder $q) => $q->where('user_id', $user->id);
@@ -36,7 +52,7 @@ class OutfitController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('outfits.index', compact('outfits', 'hashtags', 'selected'));
+        return view('outfits.index', compact('outfits', 'hashtags', 'selected', 'total', 'nextOffset'));
     }
 
     /** Ghép prompt dùng chung của tài khoản + các outfit đã chọn: /compose?ids[]=1&ids[]=2 */
@@ -111,9 +127,18 @@ class OutfitController extends Controller
     public function cover(Request $request, Outfit $outfit)
     {
         $this->authorizeOwner($request, $outfit);
-        abort_unless($outfit->cover_path && Storage::disk('local')->exists($outfit->cover_path), 404);
+        abort_unless($outfit->cover_path, 404);
+        $disk = Outfit::coverDisk();
 
-        return response()->file(Storage::disk('local')->path($outfit->cover_path), [
+        // S3: chuyển hướng sang link ký tạm thời, trình duyệt tải ảnh thẳng từ S3.
+        if ($disk->providesTemporaryUrls()) {
+            return redirect()->away($disk->temporaryUrl($outfit->cover_path, now()->addHour()))
+                ->header('Cache-Control', 'private, max-age=3000');
+        }
+
+        abort_unless($disk->exists($outfit->cover_path), 404);
+
+        return $disk->response($outfit->cover_path, null, [
             'Cache-Control' => 'private, max-age=31536000, immutable',
         ]);
     }

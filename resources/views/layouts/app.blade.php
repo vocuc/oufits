@@ -11,8 +11,22 @@
 <body>
     <header class="topbar">
         <div class="wrap topbar__inner">
-            <a href="{{ route('outfits.index') }}" class="brand">OOTD<span>prompt</span></a>
-            <a href="{{ route('outfits.create') }}" class="btn btn--primary">+ Thêm outfit</a>
+            <a href="{{ auth()->check() ? route('outfits.index') : route('login') }}" class="brand">OOTD<span>prompt</span></a>
+            @auth
+                <nav class="nav">
+                    <a href="{{ route('settings.edit') }}" class="nav__link">Prompt dùng chung</a>
+                    <a href="{{ route('outfits.create') }}" class="btn btn--primary">+ Thêm outfit</a>
+                    <form method="post" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="btn" title="{{ auth()->user()->email }}">Đăng xuất</button>
+                    </form>
+                </nav>
+            @else
+                <nav class="nav">
+                    <a href="{{ route('login') }}" class="nav__link">Đăng nhập</a>
+                    <a href="{{ route('register') }}" class="btn btn--primary">Đăng ký</a>
+                </nav>
+            @endauth
         </div>
     </header>
 

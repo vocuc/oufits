@@ -1,0 +1,118 @@
+QUY TẮC TẠO OUTFIT
+==================
+
+1. MỖI OUTFIT = 1 BẢN GHI, CHỈ LƯU ITEM + CÁCH PHỐI
+---------------------------------------------------
+- KHÔNG lưu câu lệnh hoàn chỉnh. KHÔNG viết "Tạo MỘT ảnh...", không viết phần giày, người mẫu,
+  tạo dáng, bối cảnh, yêu cầu chung, câu sửa nhanh.
+- Những phần đó là PHẦN DÙNG CHUNG. MỖI TÀI KHOẢN có bản riêng, sửa ở trang "Prompt dùng chung"
+  (/settings). Tài khoản chưa sửa thì dùng mặc định:
+    resources/prompts/chung.txt      (giày, người mẫu, tạo dáng, bối cảnh, yêu cầu chung)
+    resources/prompts/sua-nhanh.txt  (câu sửa nhanh)
+- Mỗi outfit thuộc về một tài khoản; tài khoản chỉ thấy và ghép outfit của mình.
+- Trang /compose ghép phần dùng chung + danh sách N outfit thành 1 prompt (1 ảnh nhiều khung).
+  Vì vậy mỗi outfit phải tự đứng được khi đặt cạnh outfit khác trong danh sách.
+
+
+2. CÁC TRƯỜNG CỦA MỘT OUTFIT
+----------------------------
+title (bắt buộc)
+  - Món chính + các món đi kèm nổi bật, nối bằng " + ".
+  - VD: "Len đen trễ vai + short đen + tất đen"
+        "Đầm nhung đen trễ vai mini bèo + chuỗi ngọc trai"
+
+style (nên có)
+  - Phong cách thời trang + cảm giác tổng thể, ngắn gọn, ngăn cách bằng dấu phẩy.
+  - VD: "Street style kiểu Paris, cá tính, tôn chân dài"
+        "Tiểu thư Hàn ngọt ngào, sáng màu, tôn dáng nhỏ người"
+
+items (bắt buộc) - xem mục 3.
+
+hashtags (bắt buộc) - xem mục 4.
+
+source_title, source_author, source_url, source_position (nếu outfit lấy từ ảnh RedNote)
+  - source_url: link bài RedNote.
+  - source_position: vị trí khung ảnh trong bài, VD "Ảnh 1, khung thứ 2 hàng trên".
+
+
+3. CÁCH VIẾT ITEMS
+------------------
+- Mỗi món đồ là 1 dòng bắt đầu bằng "- ".
+- Thứ tự: áo / đầm -> thắt lưng -> quần / chân váy -> tất -> túi -> trang sức, phụ kiện.
+  Có thể thêm 1 dòng về tóc nếu kiểu tóc là một phần của outfit (VD tóc búi thấp).
+- Mỗi món ghi đủ: màu + chất liệu + dáng/kiểu + chi tiết đặc trưng + độ dài.
+  VD: "Áo len dệt kim màu đen, dáng oversize, cổ trễ vai rộng, tay dài rộng phồng, bo gấu tay..."
+- Ghi CÁCH MẶC / PHỐI, không chỉ liệt kê đồ:
+    sơ vin hay thả ngoài, thắt lưng thắt ở đâu (ngang eo đè lên áo / ngay cạp váy),
+    áo dài che tới đâu, túi đeo vai / xách tay / kẹp nách, túi chạm tới đâu,
+    các lớp trang sức xếp thế nào.
+- Chân: ghi rõ "chân để trần (không tất)" hoặc loại tất cụ thể (VD "tất đen mỏng sheer 20D").
+- Trái/phải luôn tính theo NGƯỜI XEM ẢNH: viết "phía bên trái ảnh", "phía bên phải ảnh".
+  Tay phía bên phải ảnh đang cầm iPhone che mặt (phần dùng chung), nên túi / clutch đặt ở
+  tay hoặc vai PHÍA BÊN TRÁI ẢNH.
+- Quần áo, túi đều TRƠN, không mô tả logo hay chữ in.
+- KHÔNG ghi trong items:
+    giày (giày luôn lấy từ ảnh tải lên),
+    người mẫu (tuổi, dáng, da),
+    tạo dáng, điện thoại che mặt,
+    bối cảnh, ánh sáng, máy ảnh,
+    các câu "giữ 100%", "không 3D", "không watermark"...
+
+Ví dụ items đúng:
+- Áo len dệt kim mềm màu trắng kem, cổ trễ vai rộng, viền cổ là một dải vải gấp bản to cùng màu chạy ngang qua hai cánh tay trên; giữa ngực phía bên trái ảnh có một chiếc nơ to bằng chính dải len đó. Tay dài, hơi rộng. Áo sơ vin gọn vào chân váy.
+- Chân váy xếp ly nhỏ đều màu trắng kem, cạp cao, dáng xòe nhẹ, dài mini tới giữa đùi.
+- Thắt lưng da đen bản vừa, khóa vàng nhỏ, cài ngay cạp váy.
+- Vòng cổ ngọc trai nhỏ ôm sát cổ (choker ngọc trai).
+- Túi xách tay nhỏ màu nâu, dáng hộp bo tròn, quai ngắn, xách bằng tay phía bên trái ảnh, buông ngang đùi.
+- Chân để trần (không tất).
+
+
+4. HASHTAGS
+-----------
+- Viết thường, không dấu, viết liền, không ký tự đặc biệt (hệ thống cũng tự chuẩn hóa:
+  "Giày cao gót" -> giaycaogot, "đ" -> d).
+- Cách nhau bằng dấu cách. Nên có đủ các nhóm:
+    mùa / dịp     : thudong, xuan, he, dutiec ...
+    màu           : mauden, maukem, mautrang ...
+    loại đồ       : aolen, aotrevai, aono, vay, chanvay, vayxepli, vayngan, damngan, damnhung,
+                    quanshort, tatden, thatlung, tuideovai, clutch, ngoctrai ...
+    phong cách    : streetstyle, tieuthu, phonghan, sangchanh, quyenru, chandai ...
+    loại giày hợp : giayboot, bootdui, bootcaoco, giaycaogot, giaymule, giaysandal, giaymaryjane ...
+- BẮT BUỘC có hashtag loại giày hợp với outfit, vì người dùng lọc outfit theo đôi giày họ có.
+- Ưu tiên dùng lại hashtag đã có (xem GET /api/outfits) thay vì đặt tên mới cho cùng một ý.
+
+
+5. LƯU VÀO DATABASE QUA API
+---------------------------
+- Token là của TỪNG TÀI KHOẢN: outfit gửi lên sẽ vào tài khoản sở hữu token. Tạo token ở trang
+  "Prompt dùng chung" -> "API token" (chỉ hiện 1 lần), rồi lưu vào OUTFIT_API_TOKEN trong .env
+  để dùng lại. Server không đọc biến này, nó chỉ là chỗ cất token cho người gọi API.
+  Gọi mà nhận 401 = token sai hoặc đã bị thay bằng token mới -> nhờ người dùng tạo token và cập nhật .env.
+- Trước khi thêm: GET http://ootd.local/api/outfits (chỉ trả outfit của tài khoản đó) để kiểm tra trùng
+  (cùng source_url + vị trí khung, hoặc cùng cách phối).
+- Thêm: POST http://ootd.local/api/outfits
+    Header: Authorization: Bearer <OUTFIT_API_TOKEN trong .env>
+            Content-Type: application/json
+    Body  : {"title", "style", "items", "hashtags", "source_title", "source_author",
+             "source_url", "source_position"}
+    hashtags gửi chuỗi "thudong mauden giayboot" hoặc mảng ["thudong","mauden"].
+- Ảnh bìa (tùy chọn): JPG/PNG/WEBP, tối đa 8 MB, nên là ảnh dọc 4:5 đã tạo từ prompt.
+    Gửi kèm khi tạo: POST /api/outfits dạng multipart/form-data, thêm trường file "cover".
+    Gắn / thay sau: POST /api/outfits/{id}/cover (multipart, trường "cover"), header Accept: application/json.
+    VD: curl -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" -F "cover=@anh.jpg" http://ootd.local/api/outfits/5/cover
+    Ảnh lưu riêng tư, chỉ chủ tài khoản xem được. Không có ảnh thì thẻ hiện "Chưa có ảnh bìa".
+- Thành công trả 201, kèm link xem outfit và has_cover. Lỗi 422 = thiếu / sai trường, đọc "errors" để sửa.
+- KHÔNG sửa seeder hay file mau-*.txt để thêm outfit mới; luôn dùng API.
+- PHP chạy project: D:\OSPanel\modules\PHP-8.3-FCGI\PHP\php.exe (PHP 7.2 quá cũ).
+
+
+6. CHECKLIST TRƯỚC KHI GỬI
+--------------------------
+[ ] items chỉ có đồ + cách mặc/phối, mỗi món 1 dòng "- "
+[ ] không có giày, người mẫu, tạo dáng, bối cảnh, yêu cầu chung trong items
+[ ] trái/phải theo người xem ảnh; túi ở phía bên trái ảnh
+[ ] đã ghi rõ chân trần hay loại tất
+[ ] không logo, không chữ trên quần áo/túi
+[ ] title dạng "món chính + món đi kèm", có style
+[ ] hashtags viết liền không dấu, có mùa, màu, loại đồ, phong cách, loại giày
+[ ] đã kiểm tra trùng bằng GET /api/outfits

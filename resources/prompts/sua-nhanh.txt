@@ -1,0 +1,14 @@
+Giày bị sai:
+Giữ nguyên toàn bộ ảnh, chỉ sửa giày thành đúng đôi trong ảnh tôi tải lên: cùng màu, cùng dáng, cùng chất liệu, cùng chi tiết.
+
+Giày bị che / bị cắt:
+Lùi khung hình để thấy trọn từ đỉnh đầu tới hết bàn chân và một phần sàn; giày phải nét, không bị váy, túi hay tay che.
+
+Bị lộ mặt:
+Chiếc iPhone màu trắng phải che kín toàn bộ khuôn mặt người mẫu.
+
+Quần áo / túi hiện logo:
+Xóa toàn bộ logo và chữ trên quần áo, túi. Chỉ giữ logo trên giày.
+
+Sai cách mặc:
+Giữ nguyên ảnh, sửa trang phục ở khung [số] cho đúng outfit [số] trong danh sách.

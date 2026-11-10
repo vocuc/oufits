@@ -15,10 +15,24 @@
         </div>
     @endif
 
-    <form method="post" class="form"
+    <form method="post" class="form" enctype="multipart/form-data"
           action="{{ $outfit->exists ? route('outfits.update', $outfit) : route('outfits.store') }}">
         @csrf
         @if ($outfit->exists) @method('PUT') @endif
+
+        <div class="cover-field">
+            @if ($outfit->cover_path)
+                <img src="{{ $outfit->coverUrl() }}" alt="Ảnh bìa hiện tại" class="cover-field__img">
+            @endif
+            <label>Ảnh bìa
+                <input type="file" name="cover" accept="image/jpeg,image/png,image/webp">
+                <small class="muted">JPG, PNG hoặc WEBP, tối đa 8 MB. Nên dùng ảnh dọc 4:5 (ảnh đã tạo từ prompt).
+                    @if ($outfit->cover_path) Chọn ảnh mới để thay ảnh hiện tại. @endif</small>
+            </label>
+            @if ($outfit->cover_path)
+                <label class="check"><input type="checkbox" name="remove_cover" value="1"> Xóa ảnh bìa hiện tại</label>
+            @endif
+        </div>
 
         <label>Tên outfit *
             <input name="title" value="{{ old('title', $outfit->title) }}" required>
@@ -46,14 +60,11 @@
             </div>
         </fieldset>
 
-        <label>Prompt *
-            <textarea name="prompt" rows="16" required>{{ old('prompt', $outfit->prompt) }}</textarea>
+        <label>Item &amp; cách phối *
+            <textarea name="items" rows="14" required
+                      placeholder="- Áo len đen oversize trễ vai...&#10;- Thắt lưng da đen khóa bạc thắt ngang eo đè lên áo...&#10;- Túi hobo da đen đeo vai bên trái ảnh...">{{ old('items', $outfit->items) }}</textarea>
+            <small class="muted">Chỉ ghi các món đồ và cách mặc / phối. Giày, người mẫu, tạo dáng, bối cảnh nằm ở phần dùng chung.</small>
         </label>
-
-        <label>Câu sửa nhanh
-            <textarea name="fix_prompt" rows="8">{{ old('fix_prompt', $outfit->fix_prompt) }}</textarea>
-        </label>
-
         <div class="detail__actions">
             <button class="btn btn--primary">Lưu</button>
         </div>

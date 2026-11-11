@@ -1,16 +1,17 @@
 QUY TẮC TẠO OUTFIT
 ==================
 
-1. MỖI OUTFIT = 1 BẢN GHI, CHỈ LƯU ITEM + CÁCH PHỐI
+1. MỖI OUTFIT = 1 BẢN GHI, LƯU ITEM + CÁCH PHỐI + TẠO DÁNG
 ---------------------------------------------------
 - KHÔNG lưu câu lệnh hoàn chỉnh. KHÔNG viết "Tạo MỘT ảnh...", không viết phần giày, người mẫu,
-  tạo dáng, bối cảnh, yêu cầu chung, câu sửa nhanh.
+  bối cảnh, yêu cầu chung, câu sửa nhanh.
+- TẠO DÁNG ghi ngay trong items của từng outfit, ở cuối, dưới dòng "Tạo dáng:" (xem mục 2).
 - Những phần đó là PHẦN DÙNG CHUNG. MỖI TÀI KHOẢN có bản riêng, sửa ở trang "Prompt dùng chung"
   (/settings). Tài khoản chưa sửa thì dùng mặc định:
-    resources/prompts/chung.txt      (giày, người mẫu, tạo dáng, bối cảnh, yêu cầu chung)
+    resources/prompts/chung.txt      (khung ảnh, giày, người mẫu, bối cảnh, yêu cầu chung)
     resources/prompts/sua-nhanh.txt  (câu sửa nhanh)
 - Mỗi outfit thuộc về một tài khoản; tài khoản chỉ thấy và ghép outfit của mình.
-- Trang /compose ghép phần dùng chung + danh sách N outfit thành 1 prompt (1 ảnh nhiều khung).
+- Trang /compose ghép phần dùng chung + danh sách N outfit thành 1 prompt (mỗi outfit 1 ảnh riêng).
   Vì vậy mỗi outfit phải tự đứng được khi đặt cạnh outfit khác trong danh sách.
 
 
@@ -48,13 +49,12 @@ source_title, source_author, source_url, source_position (nếu outfit lấy t�
     các lớp trang sức xếp thế nào.
 - Chân: ghi rõ "chân để trần (không tất)" hoặc loại tất cụ thể (VD "tất đen mỏng sheer 20D").
 - Trái/phải luôn tính theo NGƯỜI XEM ẢNH: viết "phía bên trái ảnh", "phía bên phải ảnh".
-  Tay phía bên phải ảnh đang cầm iPhone che mặt (phần dùng chung), nên túi / clutch đặt ở
-  tay hoặc vai PHÍA BÊN TRÁI ẢNH.
+  Mặc định tay phía bên phải ảnh cầm iPhone che mặt (ghi trong "Tạo dáng:"), nên túi / clutch đặt ở
+  tay hoặc vai PHÍA BÊN TRÁI ẢNH. Nếu đổi dáng thì túi phải khớp với tay còn trống.
 - Quần áo, túi đều TRƠN, không mô tả logo hay chữ in.
 - KHÔNG ghi trong items:
     giày (giày luôn lấy từ ảnh tải lên),
     người mẫu (tuổi, dáng, da),
-    tạo dáng, điện thoại che mặt,
     bối cảnh, ánh sáng, máy ảnh,
     các câu "giữ 100%", "không 3D", "không watermark"...
 
@@ -65,6 +65,17 @@ Ví dụ items đúng:
 - Vòng cổ ngọc trai nhỏ ôm sát cổ (choker ngọc trai).
 - Túi xách tay nhỏ màu nâu, dáng hộp bo tròn, quai ngắn, xách bằng tay phía bên trái ảnh, buông ngang đùi.
 - Chân để trần (không tất).
+
+Tạo dáng:
+- Tay phía bên phải ảnh giơ chiếc iPhone màu trắng che kín toàn bộ khuôn mặt, điện thoại dọc, khuỷu tay khép sát người.
+- Tay phía bên trái ảnh xách túi buông ngang đùi.
+- Đứng thẳng, hai chân khép nhẹ, dáng nữ tính.
+
+TẠO DÁNG (bắt buộc, cuối items):
+- Một dòng "Tạo dáng:" rồi 2–3 dòng "- ": tay phía bên phải ảnh, tay phía bên trái ảnh, dáng đứng / chân.
+- Mặc định giữ iPhone trắng che kín mặt ở tay phía bên phải ảnh; tay còn lại tương tác với túi / phụ kiện của chính outfit.
+- Dáng hợp phong cách: công sở đứng thẳng thanh lịch, dạo phố bước nhẹ, váy xòe hơi xoay người...
+- Không che giày, không che món đồ chính.
 
 
 4. HASHTAGS
@@ -87,10 +98,11 @@ Ví dụ items đúng:
 - Token là của TỪNG TÀI KHOẢN: outfit gửi lên sẽ vào tài khoản sở hữu token. Tạo token ở trang
   "Prompt dùng chung" -> "API token" (chỉ hiện 1 lần), rồi lưu vào OUTFIT_API_TOKEN trong .env
   để dùng lại. Server không đọc biến này, nó chỉ là chỗ cất token cho người gọi API.
+  Địa chỉ server lấy từ OUTFIT_API_URL trong .env (hiện là https://otd.a51.vn, bỏ dấu / ở cuối khi ghép).
   Gọi mà nhận 401 = token sai hoặc đã bị thay bằng token mới -> nhờ người dùng tạo token và cập nhật .env.
-- Trước khi thêm: GET http://ootd.local/api/outfits (chỉ trả outfit của tài khoản đó) để kiểm tra trùng
+- Trước khi thêm: GET $OUTFIT_API_URL/api/outfits (chỉ trả outfit của tài khoản đó) để kiểm tra trùng
   (cùng source_url + vị trí khung, hoặc cùng cách phối).
-- Thêm: POST http://ootd.local/api/outfits
+- Thêm: POST $OUTFIT_API_URL/api/outfits
     Header: Authorization: Bearer <OUTFIT_API_TOKEN trong .env>
             Content-Type: application/json
     Body  : {"title", "style", "items", "hashtags", "source_title", "source_author",
@@ -99,7 +111,7 @@ Ví dụ items đúng:
 - Ảnh bìa (tùy chọn): JPG/PNG/WEBP, tối đa 8 MB, nên là ảnh dọc 4:5 đã tạo từ prompt.
     Gửi kèm khi tạo: POST /api/outfits dạng multipart/form-data, thêm trường file "cover".
     Gắn / thay sau: POST /api/outfits/{id}/cover (multipart, trường "cover"), header Accept: application/json.
-    VD: curl -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" -F "cover=@anh.jpg" http://ootd.local/api/outfits/5/cover
+    VD: curl -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" -F "cover=@anh.jpg" $OUTFIT_API_URL/api/outfits/5/cover
     Ảnh lưu riêng tư, chỉ chủ tài khoản xem được. Không có ảnh thì thẻ hiện "Chưa có ảnh bìa".
 - Thành công trả 201, kèm link xem outfit và has_cover. Lỗi 422 = thiếu / sai trường, đọc "errors" để sửa.
 - KHÔNG sửa seeder hay file mau-*.txt để thêm outfit mới; luôn dùng API.
@@ -109,7 +121,8 @@ Ví dụ items đúng:
 6. CHECKLIST TRƯỚC KHI GỬI
 --------------------------
 [ ] items chỉ có đồ + cách mặc/phối, mỗi món 1 dòng "- "
-[ ] không có giày, người mẫu, tạo dáng, bối cảnh, yêu cầu chung trong items
+[ ] không có giày, người mẫu, bối cảnh, yêu cầu chung trong items
+[ ] có mục "Tạo dáng:" ở cuối items, túi khớp với tay còn trống
 [ ] trái/phải theo người xem ảnh; túi ở phía bên trái ảnh
 [ ] đã ghi rõ chân trần hay loại tất
 [ ] không logo, không chữ trên quần áo/túi

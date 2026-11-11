@@ -35,7 +35,7 @@
             </p>
         @endif
 
-        <p class="hint">Đây chỉ là item + cách phối. Bấm "Tạo prompt" để ghép với phần dùng chung, hoặc chọn nhiều outfit ở trang chủ để ghép thành một ảnh nhiều khung.</p>
+        <p class="hint">Đây chỉ là item + cách phối. Bấm "Tạo prompt" để ghép với phần dùng chung, hoặc chọn nhiều outfit ở trang chủ để tạo mỗi outfit một ảnh.</p>
 
         <section class="block">
             <div class="block__head">

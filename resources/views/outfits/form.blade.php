@@ -62,8 +62,8 @@
 
         <label>Item &amp; cách phối *
             <textarea name="items" rows="14" required
-                      placeholder="- Áo len đen oversize trễ vai...&#10;- Thắt lưng da đen khóa bạc thắt ngang eo đè lên áo...&#10;- Túi hobo da đen đeo vai bên trái ảnh...">{{ old('items', $outfit->items) }}</textarea>
-            <small class="muted">Chỉ ghi các món đồ và cách mặc / phối. Giày, người mẫu, tạo dáng, bối cảnh nằm ở phần dùng chung.</small>
+                      placeholder="- Áo len đen oversize trễ vai...&#10;- Thắt lưng da đen khóa bạc thắt ngang eo đè lên áo...&#10;- Túi hobo da đen đeo vai bên trái ảnh...&#10;&#10;Tạo dáng:&#10;- Tay phía bên phải ảnh giơ iPhone trắng che kín mặt...&#10;- Tay phía bên trái ảnh đặt lên quai túi...">{{ old('items', $outfit->items) }}</textarea>
+            <small class="muted">Ghi các món đồ và cách mặc / phối, cuối cùng là mục "Tạo dáng:". Giày, người mẫu, bối cảnh nằm ở phần dùng chung.</small>
         </label>
         <div class="detail__actions">
             <button class="btn btn--primary">Lưu</button>

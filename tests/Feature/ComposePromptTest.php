@@ -20,7 +20,7 @@ class ComposePromptTest extends TestCase
             ->get(route('outfits.compose', ['ids' => [$b->id, $a->id]]))
             ->assertOk()->viewData('prompt');
 
-        $this->assertStringContainsString('ghép 2 khung', $prompt);
+        $this->assertStringContainsString('Tạo 2 ảnh RIÊNG BIỆT', $prompt);
         $this->assertStringContainsString('GIÀY (QUAN TRỌNG NHẤT', $prompt);
         $this->assertLessThan(strpos($prompt, 'OUTFIT 2 – Len đen'), strpos($prompt, 'OUTFIT 1 – Đầm nhung'));
         $this->assertStringContainsString("Phong cách: Street\n- Áo len đen", $prompt);
@@ -35,7 +35,7 @@ class ComposePromptTest extends TestCase
 
         $this->assertStringContainsString('PHẦN CHUNG CỦA TÔI', $prompt);
         $this->assertStringNotContainsString('GIÀY (QUAN TRỌNG NHẤT', $prompt);
-        $this->assertStringNotContainsString('ghép', $prompt);
+        $this->assertStringNotContainsString('RIÊNG BIỆT', $prompt);
         $this->assertStringContainsString('OUTFIT – Len đen', $prompt);
     }
 

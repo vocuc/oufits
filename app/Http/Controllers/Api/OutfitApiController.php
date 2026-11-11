@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Outfit;
+use App\Support\PromptComposer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OutfitApiController extends Controller
 {
@@ -73,6 +75,38 @@ class OutfitApiController extends Controller
         $outfit->replaceCover($request->file('cover'));
 
         return response()->json(['data' => $this->present($outfit->load('hashtags'))]);
+    }
+
+    /**
+     * Prompt hoàn chỉnh cho các outfit (giống trang /compose): phần dùng chung của tài khoản + outfit theo đúng thứ tự ids,
+     * kèm câu sửa nhanh của tài khoản. Dùng cho skill tạo lookbook (mỗi lượt ChatGPT gọi với 1 id).
+     * Id không thuộc tài khoản / không tồn tại -> 422 (không lặng lẽ bỏ qua, để người gọi biết prompt thiếu outfit).
+     */
+    public function compose(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct'],
+        ]);
+        $ids = collect($data['ids'])->map(fn ($id) => (int) $id)->values();
+
+        $user = $request->user();
+        $outfits = $user->outfits()->whereIn('id', $ids)->get()->keyBy('id');
+
+        $missing = $ids->reject(fn (int $id) => $outfits->has($id))->values();
+        if ($missing->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'ids' => 'Không tìm thấy outfit: '.$missing->implode(', ').'.',
+            ]);
+        }
+
+        $ordered = $ids->map(fn (int $id) => $outfits->get($id));
+
+        return response()->json(['data' => [
+            'outfit_ids' => $ids,
+            'prompt' => PromptComposer::compose($ordered, $user->commonPrompt()),
+            'fix' => $user->fixPrompt(),
+        ]]);
     }
 
     private function present(Outfit $outfit): array

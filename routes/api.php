@@ -8,4 +8,5 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     Route::get('outfits', [OutfitApiController::class, 'index']);
     Route::post('outfits', [OutfitApiController::class, 'store']);
     Route::post('outfits/{outfit}/cover', [OutfitApiController::class, 'cover']);
+    Route::get('compose', [OutfitApiController::class, 'compose']);
 });

@@ -34,6 +34,62 @@ class OutfitVisibilityTest extends TestCase
             ->assertCreated()->assertJsonPath('data.is_public', false);
     }
 
+    public function test_api_list_returns_mine_and_others_public_by_default(): void
+    {
+        $me = User::factory()->create();
+        $token = $me->issueApiToken();
+        $other = User::factory()->create(['name' => 'Người khác']);
+        $this->outfitFor($me, ['title' => 'Của tôi riêng tư', 'is_public' => false]);
+        $this->outfitFor($other, ['title' => 'Họ công khai']);
+        $this->outfitFor($other, ['title' => 'Họ riêng tư', 'is_public' => false]);
+
+        $all = $this->withToken($token)->getJson('/api/outfits')->assertOk()->json('data');
+        $titles = collect($all)->pluck('title')->sort()->values()->all();
+        $this->assertSame(['Của tôi riêng tư', 'Họ công khai'], $titles);
+        $theirs = collect($all)->firstWhere('title', 'Họ công khai');
+        $this->assertFalse($theirs['is_mine']);
+        $this->assertSame('Người khác', $theirs['owner']);
+
+        $this->withToken($token)->getJson('/api/outfits?scope=mine')
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.title', 'Của tôi riêng tư');
+    }
+
+    public function test_api_list_filters_by_all_tags(): void
+    {
+        $me = User::factory()->create();
+        $token = $me->issueApiToken();
+        $this->outfitFor($me, ['title' => 'A'])->syncHashtags('thudong giayboot');
+        $this->outfitFor(User::factory()->create(), ['title' => 'B'])->syncHashtags('thudong giayboot vay');
+        $this->outfitFor($me, ['title' => 'C'])->syncHashtags('thudong');
+
+        $titles = collect($this->withToken($token)->getJson('/api/outfits?tags=thudong,%23GiayBoot')
+            ->assertOk()->json('data'))->pluck('title')->sort()->values()->all();
+
+        $this->assertSame(['A', 'B'], $titles);
+    }
+
+    public function test_api_list_paginates_with_limit_offset(): void
+    {
+        $me = User::factory()->create();
+        $token = $me->issueApiToken();
+        foreach (range(1, 5) as $i) {
+            $this->outfitFor($me, ['title' => "O$i"]);
+        }
+
+        $this->withToken($token)->getJson('/api/outfits?limit=2')
+            ->assertOk()
+            ->assertJsonPath('data.*.title', ['O5', 'O4'])
+            ->assertJsonPath('meta', ['total' => 5, 'limit' => 2, 'offset' => 0, 'next_offset' => 2]);
+
+        $this->withToken($token)->getJson('/api/outfits?limit=2&offset=4')
+            ->assertOk()
+            ->assertJsonPath('data.*.title', ['O1'])
+            ->assertJsonPath('meta.next_offset', null);
+
+        $this->withToken($token)->getJson('/api/outfits?limit=500')->assertUnprocessable();
+        $this->withToken($token)->getJson('/api/outfits?offset=-1')->assertUnprocessable();
+    }
+
     public function test_form_can_switch_to_private(): void
     {
         $user = User::factory()->create();

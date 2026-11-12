@@ -100,8 +100,14 @@ TẠO DÁNG (bắt buộc, cuối items):
   để dùng lại. Server không đọc biến này, nó chỉ là chỗ cất token cho người gọi API.
   Địa chỉ server lấy từ OUTFIT_API_URL trong .env (hiện là https://otd.a51.vn, bỏ dấu / ở cuối khi ghép).
   Gọi mà nhận 401 = token sai hoặc đã bị thay bằng token mới -> nhờ người dùng tạo token và cập nhật .env.
-- Trước khi thêm: GET $OUTFIT_API_URL/api/outfits (chỉ trả outfit của tài khoản đó) để kiểm tra trùng
+- Trước khi thêm: GET $OUTFIT_API_URL/api/outfits?scope=mine (chỉ outfit của tài khoản đó) để kiểm tra trùng
   (cùng source_url + vị trí khung, hoặc cùng cách phối).
+- Tìm / xem: GET $OUTFIT_API_URL/api/outfits -> mặc định trả outfit của mình (cả riêng tư) + outfit công khai
+  của người khác (mỗi outfit có is_mine, owner). Lọc hashtag: ?tags=thudong,giayboot (phải có ĐỦ các tag).
+  ?scope=mine để chỉ lấy outfit của mình.
+  Phân trang: ?limit=50&offset=0 (mặc định limit 50, tối đa 200), mới nhất trước. Kết quả có
+  meta {total, limit, offset, next_offset}; next_offset = null là hết, còn lại thì gọi tiếp với offset=next_offset.
+  Kiểm tra trùng phải đọc hết các trang (lặp tới khi next_offset = null).
 - Thêm: POST $OUTFIT_API_URL/api/outfits
     Header: Authorization: Bearer <OUTFIT_API_TOKEN trong .env>
             Content-Type: application/json

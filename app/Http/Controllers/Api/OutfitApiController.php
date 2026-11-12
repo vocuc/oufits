@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Hashtag;
 use App\Models\Outfit;
 use App\Support\PromptComposer;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,15 +14,57 @@ use Illuminate\Validation\ValidationException;
 
 class OutfitApiController extends Controller
 {
+    private const DEFAULT_LIMIT = 50;
+
+    private const MAX_LIMIT = 200;
+
     private const COVER_RULES = ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'];
 
-    /** Danh sách outfit gọn (để kiểm tra trùng trước khi thêm). */
+    /**
+     * Danh sách outfit.
+     * Mặc định: outfit của mình (cả riêng tư) + outfit công khai của người khác.
+     * ?scope=mine            -> chỉ outfit của mình (dùng để kiểm tra trùng trước khi thêm).
+     * ?tags=thudong,giayboot -> chỉ outfit có ĐỦ các hashtag này.
+     * ?limit=50&offset=0     -> phân trang (limit tối đa 200); meta.next_offset = null khi hết.
+     */
     public function index(Request $request): JsonResponse
     {
-        $outfits = $request->user()->outfits()->with('hashtags')->latest()->get()
+        $request->validate([
+            'scope' => ['nullable', 'in:all,mine'],
+            'tags' => ['nullable', 'string', 'max:2000'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:'.self::MAX_LIMIT],
+            'offset' => ['nullable', 'integer', 'min:0'],
+        ]);
+        $limit = (int) $request->query('limit', self::DEFAULT_LIMIT);
+        $offset = (int) $request->query('offset', 0);
+
+        $user = $request->user();
+        $tags = collect(preg_split('/[\s,]+/', (string) $request->query('tags', '')))
+            ->map(fn ($t) => Hashtag::normalize($t))
+            ->filter()->unique()->values()->all();
+
+        $query = $request->query('scope') === 'mine'
+            ? $user->outfits()
+            : Outfit::where(fn (Builder $q) => $q->where('user_id', $user->id)->orWhere('is_public', true));
+
+        $query->withAllHashtags($tags);
+        $total = (clone $query)->count();
+
+        $outfits = $query->with(['hashtags', 'user:id,name'])
+            ->orderByDesc('created_at')->orderByDesc('id')
+            ->skip($offset)->take($limit)
+            ->get()
             ->map(fn (Outfit $o) => $this->present($o));
 
-        return response()->json(['data' => $outfits]);
+        return response()->json([
+            'data' => $outfits,
+            'meta' => [
+                'total' => $total,
+                'limit' => $limit,
+                'offset' => $offset,
+                'next_offset' => $offset + $outfits->count() < $total ? $offset + $outfits->count() : null,
+            ],
+        ]);
     }
 
     /**
@@ -127,6 +171,8 @@ class OutfitApiController extends Controller
             'hashtags' => $outfit->hashtags->pluck('name')->values(),
             'has_cover' => (bool) $outfit->cover_path,
             'is_public' => $outfit->is_public,
+            'is_mine' => $outfit->isOwnedBy(request()->user()),
+            'owner' => $outfit->user?->name,
             'url' => route('outfits.show', $outfit),
             'created_at' => $outfit->created_at?->toIso8601String(),
         ];

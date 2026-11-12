@@ -45,14 +45,14 @@ class OutfitApiTest extends TestCase
         ])->assertCreated()->assertJsonPath('data.hashtags', ['dutiec', 'vay']);
     }
 
-    public function test_lists_only_own_outfits(): void
+    public function test_scope_mine_lists_only_own_outfits(): void
     {
         $me = User::factory()->create();
         $other = User::factory()->create();
         $me->outfits()->create(['title' => 'Của tôi', 'items' => '- a']);
         $other->outfits()->create(['title' => 'Của người khác', 'items' => '- b']);
 
-        $this->withToken($me->issueApiToken())->getJson('/api/outfits')
+        $this->withToken($me->issueApiToken())->getJson('/api/outfits?scope=mine')
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.title', 'Của tôi');

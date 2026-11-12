@@ -108,11 +108,12 @@ TẠO DÁNG (bắt buộc, cuối items):
     Body  : {"title", "style", "items", "hashtags", "source_title", "source_author",
              "source_url", "source_position"}
     hashtags gửi chuỗi "thudong mauden giayboot" hoặc mảng ["thudong","mauden"].
+    is_public (tùy chọn, mặc định true = công khai): gửi false để outfit ở chế độ riêng tư.
 - Ảnh bìa (tùy chọn): JPG/PNG/WEBP, tối đa 8 MB, nên là ảnh dọc 4:5 đã tạo từ prompt.
     Gửi kèm khi tạo: POST /api/outfits dạng multipart/form-data, thêm trường file "cover".
     Gắn / thay sau: POST /api/outfits/{id}/cover (multipart, trường "cover"), header Accept: application/json.
     VD: curl -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" -F "cover=@anh.jpg" $OUTFIT_API_URL/api/outfits/5/cover
-    Ảnh lưu riêng tư, chỉ chủ tài khoản xem được. Không có ảnh thì thẻ hiện "Chưa có ảnh bìa".
+    Ảnh lưu riêng tư trên S3; outfit công khai thì người dùng đăng nhập khác xem được, outfit riêng tư chỉ chủ tài khoản. Không có ảnh thì thẻ hiện "Chưa có ảnh bìa".
 - Thành công trả 201, kèm link xem outfit và has_cover. Lỗi 422 = thiếu / sai trường, đọc "errors" để sửa.
 - KHÔNG sửa seeder hay file mau-*.txt để thêm outfit mới; luôn dùng API.
 - PHP chạy project: D:\OSPanel\modules\PHP-8.3-FCGI\PHP\php.exe (PHP 7.2 quá cũ).

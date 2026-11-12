@@ -40,10 +40,14 @@ class OutfitApiController extends Controller
             'hashtags' => ['required'],
             'hashtags.*' => ['string', 'max:100'],
             'cover' => self::COVER_RULES,
+            'is_public' => ['sometimes', 'boolean'],
         ]);
 
         $hashtags = $data['hashtags'];
         unset($data['hashtags'], $data['cover']);
+        if ($request->has('is_public')) {
+            $data['is_public'] = $request->boolean('is_public');
+        }
 
         if (! is_string($hashtags) && ! is_array($hashtags)) {
             return response()->json([
@@ -122,6 +126,7 @@ class OutfitApiController extends Controller
             'items' => $outfit->items,
             'hashtags' => $outfit->hashtags->pluck('name')->values(),
             'has_cover' => (bool) $outfit->cover_path,
+            'is_public' => $outfit->is_public,
             'url' => route('outfits.show', $outfit),
             'created_at' => $outfit->created_at?->toIso8601String(),
         ];

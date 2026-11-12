@@ -17,8 +17,28 @@ class Outfit extends Model
     protected $fillable = [
         'user_id', 'title', 'style',
         'source_title', 'source_author', 'source_url', 'source_position',
-        'items',
+        'items', 'is_public',
     ];
+
+    protected $attributes = [
+        'is_public' => true,
+    ];
+
+    protected function casts(): array
+    {
+        return ['is_public' => 'boolean'];
+    }
+
+    /** Chủ outfit xem được mọi outfit của mình; người khác chỉ xem được outfit công khai. */
+    public function isVisibleTo(?User $user): bool
+    {
+        return $this->is_public || ($user && $this->user_id === $user->id);
+    }
+
+    public function isOwnedBy(?User $user): bool
+    {
+        return $user !== null && $this->user_id === $user->id;
+    }
 
     public function user(): BelongsTo
     {

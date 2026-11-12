@@ -34,6 +34,13 @@
             @endif
         </div>
 
+        <fieldset>
+            <legend>Chế độ hiển thị</legend>
+            @php($isPublic = (bool) old('is_public', $outfit->is_public ?? true))
+            <label class="check"><input type="radio" name="is_public" value="1" @checked($isPublic)> Công khai <small class="muted">— người dùng khác có link đều xem được</small></label>
+            <label class="check"><input type="radio" name="is_public" value="0" @checked(! $isPublic)> Riêng tư <small class="muted">— chỉ mình bạn xem được</small></label>
+        </fieldset>
+
         <label>Tên outfit *
             <input name="title" value="{{ old('title', $outfit->title) }}" required>
         </label>

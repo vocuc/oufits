@@ -72,7 +72,7 @@ class AccountTest extends TestCase
         $me = User::factory()->create();
         $other = User::factory()->create();
         $mine = $me->outfits()->create(['title' => 'Của tôi', 'items' => '- a']);
-        $theirs = $other->outfits()->create(['title' => 'Của người khác', 'items' => '- b']);
+        $theirs = $other->outfits()->create(['title' => 'Của người khác', 'items' => '- b', 'is_public' => false]);
         $theirs->syncHashtags('hashtagcuanguoikhac');
 
         $this->actingAs($me);

@@ -39,13 +39,23 @@ class ComposePromptTest extends TestCase
         $this->assertStringContainsString('OUTFIT – Len đen', $prompt);
     }
 
-    public function test_cannot_compose_other_users_outfits(): void
+    public function test_cannot_compose_other_users_private_outfits(): void
     {
         $me = User::factory()->create();
-        $theirs = User::factory()->create()->outfits()->create(['title' => 'Bí mật', 'items' => '- x']);
+        $theirs = User::factory()->create()->outfits()->create(['title' => 'Bí mật', 'items' => '- x', 'is_public' => false]);
 
         $this->actingAs($me)->get(route('outfits.compose', ['ids' => [$theirs->id]]))
             ->assertOk()->assertDontSee('Bí mật')->assertSee('Chưa chọn outfit');
+    }
+
+    public function test_can_compose_other_users_public_outfits(): void
+    {
+        $me = User::factory()->create();
+        $theirs = User::factory()->create()->outfits()->create(['title' => 'Công khai', 'items' => '- x']);
+
+        $prompt = $this->actingAs($me)->get(route('outfits.compose', ['ids' => [$theirs->id]]))->viewData('prompt');
+
+        $this->assertStringContainsString('OUTFIT – Công khai', $prompt);
     }
 
     public function test_pages_render(): void

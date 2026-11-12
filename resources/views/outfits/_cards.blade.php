@@ -19,7 +19,7 @@
             @endif
         </a>
         <label class="pick"><input type="checkbox" name="ids[]" value="{{ $outfit->id }}"> Chọn để ghép</label>
-        <a href="{{ route('outfits.show', $outfit) }}" class="card__title">{{ $outfit->title }}</a>
+        <a href="{{ route('outfits.show', $outfit) }}" class="card__title">@unless ($outfit->is_public)🔒 @endunless{{ $outfit->title }}</a>
         @if ($outfit->style)
             <p class="muted">{{ $outfit->style }}</p>
         @endif

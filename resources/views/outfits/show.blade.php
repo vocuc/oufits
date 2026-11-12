@@ -12,6 +12,7 @@
             </a>
         @endif
         <h1>{{ $outfit->title }}</h1>
+        <p class="muted">{{ $outfit->is_public ? '🌐 Công khai' : '🔒 Riêng tư' }}@unless ($outfit->isOwnedBy(auth()->user())) · của {{ $outfit->user?->name }}@endunless</p>
         @if ($outfit->style)
             <p class="muted">{{ $outfit->style }}</p>
         @endif
@@ -45,6 +46,7 @@
             </div>
             <pre id="items" class="prompt">{{ \App\Support\PromptComposer::outfitBlock($outfit) }}</pre>
         </section>
+        @if ($outfit->isOwnedBy(auth()->user()))
         <div class="detail__actions">
             <a href="{{ route('outfits.edit', $outfit) }}" class="btn">Sửa</a>
             <form method="post" action="{{ route('outfits.destroy', $outfit) }}"
@@ -54,5 +56,6 @@
                 <button class="btn btn--danger">Xóa</button>
             </form>
         </div>
+        @endif
     </div>
 @endsection

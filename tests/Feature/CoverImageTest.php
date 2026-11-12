@@ -78,9 +78,9 @@ class CoverImageTest extends TestCase
             ]))->assertSessionHasErrors('cover');
     }
 
-    public function test_other_users_cannot_view_cover(): void
+    public function test_other_users_cannot_view_private_cover(): void
     {
-        $outfit = User::factory()->create()->outfits()->create(['title' => 'x', 'items' => '- a']);
+        $outfit = User::factory()->create()->outfits()->create(['title' => 'x', 'items' => '- a', 'is_public' => false]);
         $outfit->replaceCover(UploadedFile::fake()->image('1.jpg'));
 
         $this->actingAs(User::factory()->create())->get($outfit->coverUrl())->assertNotFound();

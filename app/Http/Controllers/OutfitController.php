@@ -62,7 +62,10 @@ class OutfitController extends Controller
         $ids = collect((array) $request->query('ids', []))
             ->map(fn ($id) => (int) $id)->filter()->unique()->values();
 
-        $outfits = $user->outfits()->whereIn('id', $ids)->get()
+        // Outfit của mình + outfit công khai của người khác
+        $outfits = Outfit::whereIn('id', $ids)
+            ->where(fn (Builder $q) => $q->where('user_id', $user->id)->orWhere('is_public', true))
+            ->get()
             ->sortBy(fn (Outfit $o) => $ids->search($o->id))->values();
 
         return view('outfits.compose', [
@@ -75,7 +78,7 @@ class OutfitController extends Controller
 
     public function show(Request $request, Outfit $outfit)
     {
-        $this->authorizeOwner($request, $outfit);
+        $this->authorizeView($request, $outfit);
         $outfit->load('hashtags');
 
         return view('outfits.show', compact('outfit'));
@@ -123,10 +126,10 @@ class OutfitController extends Controller
         return redirect()->route('outfits.index')->with('status', 'Đã xóa outfit.');
     }
 
-    /** Ảnh bìa (chỉ chủ outfit xem được). */
+    /** Ảnh bìa (chủ outfit, hoặc ai đăng nhập nếu outfit công khai). */
     public function cover(Request $request, Outfit $outfit)
     {
-        $this->authorizeOwner($request, $outfit);
+        $this->authorizeView($request, $outfit);
         abort_unless($outfit->cover_path, 404);
         $disk = Outfit::coverDisk();
 
@@ -152,10 +155,16 @@ class OutfitController extends Controller
         }
     }
 
-    /** Outfit của người khác coi như không tồn tại. */
+    /** Chỉ chủ outfit được sửa / xóa; outfit riêng tư của người khác coi như không tồn tại. */
     private function authorizeOwner(Request $request, Outfit $outfit): void
     {
-        abort_unless($outfit->user_id === $request->user()->id, 404);
+        $this->authorizeView($request, $outfit);
+        abort_unless($outfit->isOwnedBy($request->user()), 403);
+    }
+
+    private function authorizeView(Request $request, Outfit $outfit): void
+    {
+        abort_unless($outfit->isVisibleTo($request->user()), 404);
     }
 
     private function validated(Request $request): array
@@ -171,6 +180,7 @@ class OutfitController extends Controller
             'hashtags' => ['required', 'string', 'max:2000'],
             'cover' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'remove_cover' => ['nullable', 'boolean'],
+            'is_public' => ['sometimes', 'boolean'],
         ], [
             'title.required' => 'Nhập tên outfit.',
             'items.required' => 'Nhập các item / cách phối đồ.',
@@ -183,6 +193,9 @@ class OutfitController extends Controller
         ]);
 
         unset($data['hashtags'], $data['cover'], $data['remove_cover']);
+        if ($request->has('is_public')) {
+            $data['is_public'] = $request->boolean('is_public');
+        }
 
         return $data;
     }

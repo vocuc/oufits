@@ -88,18 +88,14 @@ class AccountTest extends TestCase
         $this->get(route('outfits.show', $mine))->assertOk();
     }
 
-    public function test_user_can_edit_and_reset_fix_prompt_and_no_common_prompt_left(): void
+    public function test_settings_page_only_has_api_token(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $this->get(route('settings.edit'))->assertOk()->assertSee('Câu sửa nhanh')->assertDontSee('common_prompt', false);
-        $this->put(route('settings.prompts'), ['fix_prompt' => 'Sửa riêng'])->assertRedirect();
-        $this->assertSame('Sửa riêng', $user->fresh()->fixPrompt());
-
-        $this->delete(route('settings.prompts.reset'));
-        $this->assertNull($user->fresh()->fix_prompt);
-        $this->assertSame(\App\Support\PromptComposer::defaultFix(), $user->fresh()->fixPrompt());
+        $this->get(route('settings.edit'))->assertOk()->assertSee('API token')
+            ->assertDontSee('Câu sửa nhanh')->assertDontSee('fix_prompt', false)->assertDontSee('common_prompt', false);
+        $this->assertContains($this->put('/settings/prompts', ['fix_prompt' => 'x'])->status(), [404, 405]);
     }
 
     public function test_issue_token_shows_it_once(): void

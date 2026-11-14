@@ -70,7 +70,7 @@ class OutfitController extends Controller
             ->sortBy(fn (Outfit $o) => $ids->search($o->id))->values();
 
         // Khung ảnh lấy từ layout ĐÃ DUYỆT (?layout=mã; mặc định layout đầu tiên)
-        $layouts = OutfitLayout::usable($user)->get(['id', 'code', 'name', 'prompt']);
+        $layouts = OutfitLayout::usable($user)->get(['id', 'code', 'name', 'prompt', 'fix_prompt']);
         $layout = $layouts->firstWhere('code', (string) $request->query('layout')) ?? $layouts->first();
 
         return view('outfits.compose', [
@@ -78,7 +78,7 @@ class OutfitController extends Controller
             'layouts' => $layouts,
             'layout' => $layout,
             'prompt' => $outfits->isEmpty() || ! $layout ? '' : PromptComposer::compose($outfits, $layout->prompt),
-            'fix' => $user->fixPrompt(),
+            'fix' => $layout ? $layout->fixFor($user) : $user->fixPrompt(),
         ]);
     }
 

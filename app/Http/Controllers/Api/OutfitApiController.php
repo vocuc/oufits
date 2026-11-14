@@ -205,7 +205,7 @@ class OutfitApiController extends Controller
             'outfit_ids' => $ids,
             'layout' => $layout->code,
             'prompt' => PromptComposer::compose($ordered, $layout->prompt, $data['hook'] ?? null),
-            'fix' => $user->fixPrompt(),
+            'fix' => $layout->fixFor($user),
         ]]);
     }
 

@@ -7,39 +7,6 @@
 
     <div class="detail">
         <h1>Cài đặt</h1>
-        <p class="hint">
-            Prompt khung ảnh (giày, người mẫu, bố cục, chữ) nằm trong từng layout ở trang
-            <a href="{{ route('outfit-layouts.index') }}">Mẫu ảnh outfit</a>; ảnh outfit chỉ tạo theo layout đã duyệt.
-        </p>
-
-        @if ($errors->any())
-            <div class="errors">
-                @foreach ($errors->all() as $error)
-                    <div>{{ $error }}</div>
-                @endforeach
-            </div>
-        @endif
-
-        <form method="post" action="{{ route('settings.prompts') }}" class="form">
-            @csrf
-            @method('PUT')
-
-            <label>Câu sửa nhanh
-                <textarea name="fix_prompt" rows="12">{{ old('fix_prompt', $fix) }}</textarea>
-            </label>
-
-            <div class="detail__actions">
-                <button class="btn btn--primary">Lưu</button>
-            </div>
-        </form>
-
-        <form method="post" action="{{ route('settings.prompts.reset') }}"
-              onsubmit="return confirm('Khôi phục câu sửa nhanh về mặc định?')">
-            @csrf
-            @method('DELETE')
-            <button class="btn">Khôi phục mặc định</button>
-        </form>
-
         <section class="block">
             <div class="block__head">
                 <h2>API token</h2>

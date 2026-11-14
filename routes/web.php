@@ -41,7 +41,5 @@ Route::middleware('auth')->group(function () {
     Route::delete('guidelines/{guideline}', [GuidelineController::class, 'destroy'])->name('guidelines.destroy');
 
     Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
-    Route::put('settings/prompts', [SettingsController::class, 'updatePrompts'])->name('settings.prompts');
-    Route::delete('settings/prompts', [SettingsController::class, 'resetPrompts'])->name('settings.prompts.reset');
     Route::post('settings/token', [SettingsController::class, 'issueToken'])->name('settings.token');
 });

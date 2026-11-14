@@ -83,6 +83,6 @@ class ComposePromptTest extends TestCase
         $this->get('/')->assertOk()->assertSee('Chọn để ghép')->assertSee('#thudong');
         $this->get(route('outfits.show', $a))->assertOk()->assertSee('- Áo len đen');
         $this->get(route('outfits.create'))->assertOk();
-        $this->get(route('settings.edit'))->assertOk()->assertSee('Mẫu ảnh outfit');
+        $this->get(route('settings.edit'))->assertOk()->assertSee('API token');
     }
 }

@@ -45,6 +45,15 @@ class OutfitLayoutTest extends TestCase
         $this->assertStringContainsString('/outfit-layouts/'.$layout->id.'/image', $layout->url());
 
         $this->withToken($token)->getJson('/api/outfit-layouts?status=approved')->assertOk()->assertJsonCount(1, 'data');
+
+        // câu sửa nhanh riêng của layout -> /api/compose trả về đúng câu đó; chưa có thì câu chung
+        $outfit = $user->outfits()->create(['title' => 'A', 'items' => '- a']);
+        $this->withToken($token)->getJson("/api/compose?ids[]={$outfit->id}")->assertOk()
+            ->assertJsonPath('data.fix', \App\Support\PromptComposer::defaultFix());
+        $this->withToken($token)->post('/api/outfit-layouts', ['code' => '02', 'name' => 'Selfie gương', 'fix_prompt' => 'SỬA BỐ CỤC GƯƠNG'], $h)
+            ->assertOk()->assertJsonPath('data.fix_prompt', 'SỬA BỐ CỤC GƯƠNG');
+        $this->withToken($token)->getJson("/api/compose?ids[]={$outfit->id}")->assertOk()
+            ->assertJsonPath('data.fix', 'SỬA BỐ CỤC GƯƠNG');
         // tách bạch với mẫu bìa
         $this->assertSame(0, CoverTemplate::query()->count());
         $this->withToken($token)->getJson('/api/cover-templates')->assertOk()->assertJsonCount(0, 'data');
@@ -58,7 +67,7 @@ class OutfitLayoutTest extends TestCase
 
         $this->actingAs($user)->get('/outfit-layouts')->assertOk()
             ->assertSee('Mẫu ảnh outfit')->assertSee('01 · Lookbook 2 cột')->assertSee('Chưa có ảnh mẫu')
-            ->assertSee('Xem prompt layout')->assertDontSee('Dải tối mờ');
+            ->assertSee('Xem prompt layout')->assertSee('Xem câu sửa nhanh')->assertDontSee('Dải tối mờ');
         $this->actingAs($user)->get('/cover-templates')->assertOk()->assertSee('Dải tối mờ')->assertDontSee('Lookbook 2 cột')
             ->assertDontSee('Xem prompt layout');
 

@@ -55,6 +55,10 @@
                                 <summary>Xem prompt layout</summary>
                                 <pre>{{ $t->prompt ?: 'Chưa có prompt — layout này chưa dùng được dù đã duyệt.' }}</pre>
                             </details>
+                            <details class="ctpl__prompt">
+                                <summary>Xem câu sửa nhanh</summary>
+                                <pre>{{ $t->fix_prompt ?: 'Chưa có câu riêng — dùng câu sửa nhanh chung (mặc định).' }}</pre>
+                            </details>
                         @endif
                     </div>
                     <form method="post" action="{{ route($route.'.update', ['template' => $t->id]) }}" class="ctpl__req">

@@ -48,6 +48,11 @@ class User extends Authenticatable
         return $this->hasMany(StylingIdea::class);
     }
 
+    public function outfitItems(): HasMany
+    {
+        return $this->hasMany(OutfitItem::class);
+    }
+
     /** Prompt dùng chung của tài khoản; chưa tự sửa thì dùng mặc định. */
     public function commonPrompt(): string
     {

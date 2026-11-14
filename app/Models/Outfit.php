@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
@@ -48,6 +49,12 @@ class Outfit extends Model
     public function hashtags(): BelongsToMany
     {
         return $this->belongsToMany(Hashtag::class)->orderBy('name');
+    }
+
+    /** Các món đã tách từ items (cột "items" là văn bản nên quan hệ đặt tên itemsList). */
+    public function itemsList(): HasMany
+    {
+        return $this->hasMany(OutfitItem::class)->orderBy('position');
     }
 
     /** Outfit phải có ĐỦ tất cả hashtag được chọn. */

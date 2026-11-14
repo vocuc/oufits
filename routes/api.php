@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\OutfitApiController;
 use App\Http\Controllers\Api\StylingIdeaApiController;
+use App\Http\Controllers\Api\StylingItemApiController;
 use App\Http\Controllers\Api\StylingRuleApiController;
 use App\Http\Middleware\EnsureApiToken;
 use Illuminate\Support\Facades\Route;
@@ -23,4 +24,12 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     Route::put('styling-ideas', [StylingIdeaApiController::class, 'upsert']);
     Route::post('styling-ideas/{id}/used', [StylingIdeaApiController::class, 'used'])->whereNumber('id');
     Route::delete('styling-ideas/{id}', [StylingIdeaApiController::class, 'destroy'])->whereNumber('id');
+
+    // Món đồ + độ hợp giữa các món (D:\FlowKit\a51-skills\outfit-video\thiet-ke-item.txt)
+    Route::put('outfits/{outfit}/items', [StylingItemApiController::class, 'putItems']);
+    Route::get('outfit-items', [StylingItemApiController::class, 'index']);
+    Route::post('styling/learn', [StylingItemApiController::class, 'learn']);
+    Route::get('item-pairs', [StylingItemApiController::class, 'pairs']);
+    Route::post('styling/score', [StylingItemApiController::class, 'score']);
+    Route::post('styling/suggest', [StylingItemApiController::class, 'suggest']);
 });

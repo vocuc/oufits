@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\CoverTemplateApiController;
 use App\Http\Controllers\Api\GuidelineApiController;
 use App\Http\Controllers\Api\OutfitApiController;
+use App\Http\Controllers\Api\OutfitLayoutApiController;
 use App\Http\Controllers\Api\RenderApiController;
 use App\Http\Controllers\Api\StylingIdeaApiController;
 use App\Http\Controllers\Api\StylingItemApiController;
@@ -32,13 +33,18 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     Route::post('renders', [RenderApiController::class, 'store']);
     Route::get('renders/used-outfits', [RenderApiController::class, 'usedOutfits']);
 
-    // Quy tắc chủ shop viết trên web (tạo outfit / ảnh bìa / đặt hook); API chỉ đọc + thêm
+    // Quy tắc chủ shop viết trên web (tạo outfit / ảnh bìa / đặt hook); API đọc / thêm / sửa (không xoá)
     Route::get('guidelines', [GuidelineApiController::class, 'index']);
     Route::post('guidelines', [GuidelineApiController::class, 'store']);
+    Route::put('guidelines/{id}', [GuidelineApiController::class, 'update'])->whereNumber('id');
 
     // Mẫu ảnh bìa lô phối đồ (worker chỉ dùng mẫu đã duyệt)
     Route::get('cover-templates', [CoverTemplateApiController::class, 'index']);
     Route::post('cover-templates', [CoverTemplateApiController::class, 'upsert']);
+
+    // Mẫu ảnh outfit (layout ChatGPT vẽ; worker chỉ dùng mẫu đã duyệt)
+    Route::get('outfit-layouts', [OutfitLayoutApiController::class, 'index']);
+    Route::post('outfit-layouts', [OutfitLayoutApiController::class, 'upsert']);
 
     // Món đồ + độ hợp giữa các món (D:\FlowKit\a51-skills\outfit-video\thiet-ke-item.txt)
     Route::put('outfits/{outfit}/items', [StylingItemApiController::class, 'putItems']);

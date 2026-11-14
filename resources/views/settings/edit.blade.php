@@ -1,15 +1,15 @@
 @extends('layouts.app')
 
-@section('title', 'Prompt dùng chung · OOTD Prompt')
+@section('title', 'Cài đặt · OOTD Prompt')
 
 @section('content')
     <a href="{{ route('outfits.index') }}" class="back">← Quay lại</a>
 
     <div class="detail">
-        <h1>Prompt dùng chung</h1>
+        <h1>Cài đặt</h1>
         <p class="hint">
-            Phần này được ghép với danh sách outfit khi bấm "Ghép prompt" (giày, người mẫu, tạo dáng, bối cảnh, yêu cầu chung).
-            Mỗi tài khoản có bản riêng. Outfit chỉ lưu item và cách phối.
+            Prompt khung ảnh (giày, người mẫu, bố cục, chữ) nằm trong từng layout ở trang
+            <a href="{{ route('outfit-layouts.index') }}">Mẫu ảnh outfit</a>; ảnh outfit chỉ tạo theo layout đã duyệt.
         </p>
 
         @if ($errors->any())
@@ -24,10 +24,6 @@
             @csrf
             @method('PUT')
 
-            <label>Prompt dùng chung *
-                <textarea name="common_prompt" rows="18" required>{{ old('common_prompt', $common) }}</textarea>
-            </label>
-
             <label>Câu sửa nhanh
                 <textarea name="fix_prompt" rows="12">{{ old('fix_prompt', $fix) }}</textarea>
             </label>
@@ -38,7 +34,7 @@
         </form>
 
         <form method="post" action="{{ route('settings.prompts.reset') }}"
-              onsubmit="return confirm('Khôi phục prompt dùng chung và câu sửa nhanh về mặc định?')">
+              onsubmit="return confirm('Khôi phục câu sửa nhanh về mặc định?')">
             @csrf
             @method('DELETE')
             <button class="btn">Khôi phục mặc định</button>

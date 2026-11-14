@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 /**
  * Mẫu ảnh bìa lô phối đồ: ảnh mẫu + cách làm (Claude ghi), trạng thái duyệt (chủ shop duyệt trên web)
  * và yêu cầu của chủ shop. Worker phối đồ chỉ làm bìa theo mẫu đã duyệt.
+ * OutfitLayout (Mẫu ảnh outfit) kế thừa class này, chỉ đổi bảng / thư mục ảnh / tên route.
  */
 class CoverTemplate extends Model
 {
@@ -21,6 +22,11 @@ class CoverTemplate extends Model
 
     public const STATUSES = [self::PENDING => 'Chờ duyệt', self::APPROVED => 'Đã duyệt', self::REJECTED => 'Bỏ'];
 
+    /** Tiền tố route web (index / update / image) + thư mục ảnh trên disk. */
+    public const ROUTE = 'cover-templates';
+
+    protected $table = 'cover_templates';
+
     protected $guarded = ['id'];
 
     protected $hidden = ['user_id', 'image_path', 'thumb_path'];
@@ -30,12 +36,12 @@ class CoverTemplate extends Model
         return ['reviewed_at' => 'datetime', 'request_updated_at' => 'datetime'];
     }
 
-    /** Lưu ảnh mẫu + thumbnail WebP vào cover-templates/{user_id}/ (cùng disk ảnh bìa outfit); xoá ảnh cũ. */
+    /** Lưu ảnh mẫu + thumbnail WebP vào {ROUTE}/{user_id}/ (cùng disk ảnh bìa outfit); xoá ảnh cũ. */
     public function replaceImage(UploadedFile $file): void
     {
         $disk = Outfit::coverDisk();
         $old = array_filter([$this->image_path, $this->thumb_path]);
-        $base = 'cover-templates/'.$this->user_id.'/'.Str::uuid();
+        $base = static::ROUTE.'/'.$this->user_id.'/'.Str::uuid();
         $path = $base.'.'.strtolower($file->getClientOriginalExtension() ?: 'jpg');
         throw_unless($disk->put($path, file_get_contents($file->getRealPath()), ['visibility' => 'private']),
             \RuntimeException::class, 'Không lưu được ảnh.');
@@ -59,8 +65,8 @@ class CoverTemplate extends Model
     public function url(bool $thumb = false): ?string
     {
         // v đổi theo file ảnh: ảnh mẫu bị thay (cùng id) thì trình duyệt không dùng lại ảnh / link S3 cũ đã cache
-        return $this->image_path ? route('cover-templates.image', [
-            'coverTemplate' => $this, 'thumb' => $thumb ? 1 : null, 'v' => substr(md5($this->image_path), 0, 10),
+        return $this->image_path ? route(static::ROUTE.'.image', [
+            'template' => $this->id, 'thumb' => $thumb ? 1 : null, 'v' => substr(md5($this->image_path), 0, 10),
         ]) : null;
     }
 

@@ -88,19 +88,18 @@ class AccountTest extends TestCase
         $this->get(route('outfits.show', $mine))->assertOk();
     }
 
-    public function test_user_can_edit_and_reset_common_prompt(): void
+    public function test_user_can_edit_and_reset_fix_prompt_and_no_common_prompt_left(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        $this->put(route('settings.prompts'), ['common_prompt' => 'Phần chung riêng', 'fix_prompt' => 'Sửa riêng'])
-            ->assertRedirect();
-        $this->assertSame('Phần chung riêng', $user->fresh()->commonPrompt());
+        $this->get(route('settings.edit'))->assertOk()->assertSee('Câu sửa nhanh')->assertDontSee('common_prompt', false);
+        $this->put(route('settings.prompts'), ['fix_prompt' => 'Sửa riêng'])->assertRedirect();
         $this->assertSame('Sửa riêng', $user->fresh()->fixPrompt());
 
         $this->delete(route('settings.prompts.reset'));
-        $this->assertNull($user->fresh()->common_prompt);
-        $this->assertStringContainsString('GIÀY (QUAN TRỌNG NHẤT', $user->fresh()->commonPrompt());
+        $this->assertNull($user->fresh()->fix_prompt);
+        $this->assertSame(\App\Support\PromptComposer::defaultFix(), $user->fresh()->fixPrompt());
     }
 
     public function test_issue_token_shows_it_once(): void
@@ -121,6 +120,6 @@ class AccountTest extends TestCase
         $user->outfits()->create(['title' => 'B', 'items' => '- Váy']);
 
         $this->actingAs($user)->get('/')->assertOk()
-            ->assertSeeInOrder(['account__toggle', 'Lan', 'lan@example.com', '2 outfit', 'Prompt dùng chung', 'Đăng xuất'], false);
+            ->assertSeeInOrder(['account__toggle', 'Lan', 'lan@example.com', '2 outfit', 'Mẫu ảnh outfit', 'Cài đặt', 'Đăng xuất'], false);
     }
 }

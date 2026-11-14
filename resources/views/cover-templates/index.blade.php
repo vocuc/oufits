@@ -1,18 +1,16 @@
+{{-- Dùng chung cho "Mẫu ảnh bìa" (/cover-templates) và "Mẫu ảnh outfit" (/outfit-layouts). --}}
 @extends('layouts.app')
 
-@section('title', 'Mẫu ảnh bìa · OOTD Prompt')
+@section('title', $page['title'].' · OOTD Prompt')
 
 @section('content')
     <section class="filters">
-        <h1 style="margin:0 0 6px">Mẫu ảnh bìa</h1>
-        <p class="muted" style="margin:0">
-            Các cách làm ảnh bìa cho lô phối đồ A51. Worker phối đồ <b>chỉ làm bìa theo mẫu đã duyệt</b> và đọc cột
-            "Yêu cầu" của mẫu đó trước khi làm.
-        </p>
+        <h1 style="margin:0 0 6px">{{ $page['title'] }}</h1>
+        <p class="muted" style="margin:0">{{ $page['intro'] }}</p>
         <div class="chips">
-            <a href="{{ route('cover-templates.index') }}" class="chip {{ $status ? '' : 'is-active' }}">Tất cả <small>{{ $counts->sum() }}</small></a>
+            <a href="{{ route($route.'.index') }}" class="chip {{ $status ? '' : 'is-active' }}">Tất cả <small>{{ $counts->sum() }}</small></a>
             @foreach (\App\Models\CoverTemplate::STATUSES as $key => $label)
-                <a href="{{ route('cover-templates.index', ['status' => $key]) }}" class="chip {{ $status === $key ? 'is-active' : '' }}">
+                <a href="{{ route($route.'.index', ['status' => $key]) }}" class="chip {{ $status === $key ? 'is-active' : '' }}">
                     {{ $label }} <small>{{ $counts[$key] ?? 0 }}</small>
                 </a>
             @endforeach
@@ -39,6 +37,8 @@
                     <div class="ctpl__img">
                         @if ($t->url())
                             <a href="{{ $t->url() }}" target="_blank"><img src="{{ $t->url(true) }}" alt="Mẫu {{ $t->code }}" loading="lazy"></a>
+                        @else
+                            <div class="ctpl__noimg">Chưa có ảnh mẫu</div>
                         @endif
                     </div>
                     <div class="ctpl__how">
@@ -50,8 +50,14 @@
                             <span class="chip">Hook: {{ $t->hook_type }}</span>
                         @endif
                         <div class="ctpl__text">{{ $t->how_to }}</div>
+                        @if ($page['show_prompt'])
+                            <details class="ctpl__prompt">
+                                <summary>Xem prompt layout</summary>
+                                <pre>{{ $t->prompt ?: 'Chưa có prompt — layout này chưa dùng được dù đã duyệt.' }}</pre>
+                            </details>
+                        @endif
                     </div>
-                    <form method="post" action="{{ route('cover-templates.update', $t) }}" class="ctpl__req">
+                    <form method="post" action="{{ route($route.'.update', ['template' => $t->id]) }}" class="ctpl__req">
                         @csrf
                         @method('PUT')
                         <textarea name="request" rows="7" placeholder="Ghi yêu cầu cho mẫu này...">{{ $t->request }}</textarea>

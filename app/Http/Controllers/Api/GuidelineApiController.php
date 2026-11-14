@@ -9,12 +9,28 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 /**
- * Quy tắc chủ shop viết trên web. API không sửa / xoá quy tắc có sẵn (chỉ chủ shop sửa trên web).
- *   GET  /api/guidelines?category=outfit|cover|hook  -> quy tắc ĐANG BẬT, theo thứ tự trên trang
+ * Quy tắc chủ shop viết trên web. API không xoá quy tắc; sửa chỉ khi chủ shop yêu cầu (Claude sửa theo lời chủ shop).
+ *   GET  /api/guidelines?category=outfit|cover|hook  -> quy tắc ĐANG BẬT, theo thứ tự trên trang (all=1: cả quy tắc đã tắt)
  *   POST /api/guidelines {category, body}             -> thêm vào cuối mục; trùng nội dung trong mục thì bỏ qua (200)
+ *   PUT  /api/guidelines/{id} {body?, is_active?}     -> sửa nội dung / bật tắt một quy tắc
  */
 class GuidelineApiController extends Controller
 {
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $rule = $request->user()->guidelines()->findOrFail($id);
+        $data = $request->validate([
+            'body' => ['sometimes', 'required', 'string', 'max:5000'],
+            'is_active' => ['sometimes', 'boolean'],
+        ]);
+        if (isset($data['body'])) {
+            $data['body'] = trim($data['body']);
+        }
+        $rule->update($data);
+
+        return response()->json(['data' => $rule->fresh()]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -35,11 +51,15 @@ class GuidelineApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $data = $request->validate(['category' => ['nullable', Rule::in(array_keys(Guideline::CATEGORIES))]]);
-        $rows = $request->user()->guidelines()->where('is_active', true)
+        $data = $request->validate([
+            'category' => ['nullable', Rule::in(array_keys(Guideline::CATEGORIES))],
+            'all' => ['nullable', 'boolean'],
+        ]);
+        $rows = $request->user()->guidelines()
+            ->when(! $request->boolean('all'), fn ($q) => $q->where('is_active', true))
             ->when($data['category'] ?? null, fn ($q, $c) => $q->where('category', $c))
             ->orderBy('category')->orderBy('sort')->orderBy('id')
-            ->get(['id', 'category', 'body', 'sort', 'updated_at']);
+            ->get(['id', 'category', 'body', 'is_active', 'sort', 'updated_at']);
 
         return response()->json(['data' => $rows]);
     }

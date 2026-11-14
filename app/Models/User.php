@@ -38,6 +38,11 @@ class User extends Authenticatable
         return $this->hasMany(Guideline::class);
     }
 
+    public function outfitLayouts(): HasMany
+    {
+        return $this->hasMany(OutfitLayout::class);
+    }
+
     public function coverTemplates(): HasMany
     {
         return $this->hasMany(CoverTemplate::class);
@@ -61,12 +66,6 @@ class User extends Authenticatable
     public function outfitItems(): HasMany
     {
         return $this->hasMany(OutfitItem::class);
-    }
-
-    /** Prompt dùng chung của tài khoản; chưa tự sửa thì dùng mặc định. */
-    public function commonPrompt(): string
-    {
-        return filled($this->common_prompt) ? trim($this->common_prompt) : PromptComposer::defaultCommon();
     }
 
     public function fixPrompt(): string

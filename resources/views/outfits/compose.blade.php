@@ -17,25 +17,29 @@
                     <a href="{{ route('outfits.show', $o) }}">{{ $i + 1 }}. {{ $o->title }}</a>@if (! $loop->last), @endif
                 @endforeach
             </p>
-            <p class="hint">Cách dùng: mở chat Gemini mới → chỉ tải lên ảnh giày → dán prompt. Trái/phải tính theo người xem ảnh.</p>
-
-            <section class="block">
-                <div class="block__head">
-                    <h2>Prompt hoàn chỉnh</h2>
-                    <button type="button" class="btn btn--primary" data-copy="prompt">Copy prompt</button>
+            @if (! $layout)
+                <div class="errors">{{ \App\Models\OutfitLayout::NO_APPROVED }}
+                    <a href="{{ route('outfit-layouts.index') }}">Mở Mẫu ảnh outfit</a></div>
+            @else
+                <div class="chips">
+                    <span class="muted">Layout:</span>
+                    @foreach ($layouts as $l)
+                        <a href="{{ request()->fullUrlWithQuery(['layout' => $l->code]) }}"
+                           class="chip {{ $l->is($layout) ? 'is-active' : '' }}">{{ $l->code }} · {{ $l->name }}</a>
+                    @endforeach
                 </div>
-                <pre id="prompt" class="prompt">{{ $prompt }}</pre>
-            </section>
-        @endif
+                <p class="hint">Cách dùng: mở chat mới → chỉ tải lên ảnh giày → dán prompt. Trái/phải tính theo người xem ảnh.
+                    Câu hook trên ảnh đang là "{{ \App\Support\PromptComposer::DEFAULT_HOOK }}", sửa trong prompt nếu cần.</p>
 
-        <section class="block">
-            <div class="block__head">
-                <h2>Phần dùng chung</h2>
-                <button type="button" class="btn" data-copy="common">Copy</button>
-            </div>
-            <pre id="common" class="prompt prompt--soft">{{ $common }}</pre>
-            <small class="muted" style="padding: 0 14px 12px; display: block"><a href="{{ route('settings.edit') }}">Sửa prompt dùng chung</a></small>
-        </section>
+                <section class="block">
+                    <div class="block__head">
+                        <h2>Prompt hoàn chỉnh</h2>
+                        <button type="button" class="btn btn--primary" data-copy="prompt">Copy prompt</button>
+                    </div>
+                    <pre id="prompt" class="prompt">{{ $prompt }}</pre>
+                </section>
+            @endif
+        @endif
 
         <section class="block">
             <div class="block__head">

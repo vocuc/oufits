@@ -273,3 +273,18 @@ main { padding-top: 20px; padding-bottom: 48px; }
     .gl__row { grid-template-columns: 22px minmax(0, 1fr); }
     .gl__actions { grid-column: 2; }
 }
+
+/* Mẫu ảnh outfit (/outfit-layouts): ô chưa có ảnh + prompt layout */
+.ctpl__noimg { aspect-ratio: 3 / 4; display: grid; place-items: center; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); font-size: 13px; text-align: center; padding: 8px; }
+.ctpl__prompt summary { cursor: pointer; font-size: 13px; color: var(--accent); }
+.ctpl__prompt pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; line-height: 1.5; background: var(--bg, #fafafa); border: 1px solid var(--line); border-radius: 8px; padding: 10px; max-height: 360px; overflow: auto; }
+
+/* Quy tắc: chế độ xem (chưa bấm Sửa) — ô chữ phẳng, nút Sửa chìm; chế độ sửa — ô chữ có viền, hiện Lưu + Huỷ */
+.gl__row[data-gl-row] .gl__save { display: none; }
+.gl__row[data-gl-row].is-editing .gl__save { display: inline-flex; }
+.gl__row[data-gl-row].is-editing .gl__edit { display: none; }
+.gl__row[data-gl-row] textarea[readonly] { border-color: transparent; background: transparent; resize: none; cursor: default; }
+.gl__row[data-gl-row].is-editing { border-color: var(--accent); }
+.gl__edit { background: transparent; border-color: var(--line); color: var(--muted); }
+.gl__edit:hover { color: inherit; border-color: var(--muted); }
+.gl__toggle input:disabled { cursor: default; }

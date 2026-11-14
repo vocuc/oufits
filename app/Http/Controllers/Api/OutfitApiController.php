@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Hashtag;
 use App\Models\Outfit;
+use App\Models\OutfitLayout;
 use App\Support\PromptComposer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -176,10 +177,19 @@ class OutfitApiController extends Controller
         $data = $request->validate([
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['integer', 'distinct'],
+            'layout' => ['nullable', 'string', 'max:40'],
+            'hook' => ['nullable', 'string', 'max:300'],
         ]);
         $ids = collect($data['ids'])->map(fn ($id) => (int) $id)->values();
 
         $user = $request->user();
+        // Prompt khung ảnh lấy từ layout ĐÃ DUYỆT (Mẫu ảnh outfit); không còn prompt dùng chung.
+        $layout = OutfitLayout::pick($user, $data['layout'] ?? null);
+        if (! $layout) {
+            throw ValidationException::withMessages(['layout' => isset($data['layout'])
+                ? "Layout {$data['layout']} chưa được duyệt hoặc chưa có prompt."
+                : OutfitLayout::NO_APPROVED]);
+        }
         $outfits = $user->outfits()->whereIn('id', $ids)->get()->keyBy('id');
 
         $missing = $ids->reject(fn (int $id) => $outfits->has($id))->values();
@@ -193,7 +203,8 @@ class OutfitApiController extends Controller
 
         return response()->json(['data' => [
             'outfit_ids' => $ids,
-            'prompt' => PromptComposer::compose($ordered, $user->commonPrompt()),
+            'layout' => $layout->code,
+            'prompt' => PromptComposer::compose($ordered, $layout->prompt, $data['hook'] ?? null),
             'fix' => $user->fixPrompt(),
         ]]);
     }

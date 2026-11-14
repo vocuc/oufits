@@ -61,5 +61,18 @@ class GuidelineTest extends TestCase
             ->assertOk()->assertJsonPath('created', false);
         $this->withToken($token)->postJson('/api/guidelines', ['category' => 'abc', 'body' => 'x'])->assertUnprocessable();
         $this->assertSame(2, $user->guidelines()->where('category', 'cover')->count());
+
+        // sửa nội dung / bật tắt qua API, chỉ quy tắc của chính tài khoản
+        $rule = $user->guidelines()->where('body', 'Logo không che giày')->first();
+        $this->withToken($token)->putJson("/api/guidelines/{$rule->id}", ['body' => ' Logo 8%, không che giày '])
+            ->assertOk()->assertJsonPath('data.body', 'Logo 8%, không che giày');
+        $this->withToken($token)->putJson("/api/guidelines/{$rule->id}", ['is_active' => false])
+            ->assertOk()->assertJsonPath('data.is_active', false);
+        $this->withToken($token)->getJson('/api/guidelines?category=cover')->assertJsonMissing(['body' => 'Logo 8%, không che giày']);
+        $this->withToken($token)->getJson('/api/guidelines?category=cover&all=1')->assertJsonFragment(['body' => 'Logo 8%, không che giày']);
+        $this->withToken($token)->putJson("/api/guidelines/{$rule->id}", ['body' => ''])->assertUnprocessable();
+        $foreign = User::factory()->create()->guidelines()->create(['category' => 'hook', 'body' => 'Của người khác']);
+        $this->withToken($token)->putJson("/api/guidelines/{$foreign->id}", ['body' => 'hack'])->assertNotFound();
+        $this->assertSame('Của người khác', $foreign->fresh()->body);
     }
 }

@@ -28,14 +28,17 @@
         <section class="gl" id="{{ $key }}">
             <h2>{{ $label }}</h2>
             @forelse ($rules[$key] ?? [] as $i => $rule)
-                <form method="post" action="{{ route('guidelines.update', $rule) }}" class="gl__row {{ $rule->is_active ? '' : 'is-off' }}" id="quy-tac-{{ $rule->id }}">
+                {{-- Chưa bấm "Sửa": chỉ xem (ô chữ khoá, nút Sửa chìm). Bấm "Sửa": mở khoá, hiện Lưu + Huỷ. --}}
+                <form method="post" action="{{ route('guidelines.update', $rule) }}" class="gl__row {{ $rule->is_active ? '' : 'is-off' }}" id="quy-tac-{{ $rule->id }}" data-gl-row>
                     @csrf
                     @method('PUT')
                     <span class="gl__no">{{ $loop->iteration }}</span>
-                    <textarea name="body" rows="2" required>{{ $rule->body }}</textarea>
+                    <textarea name="body" rows="2" required readonly>{{ $rule->body }}</textarea>
                     <div class="gl__actions">
-                        <label class="gl__toggle"><input type="checkbox" name="is_active" value="1" @checked($rule->is_active)> Bật</label>
-                        <button class="btn btn--primary">Lưu</button>
+                        <label class="gl__toggle"><input type="checkbox" name="is_active" value="1" @checked($rule->is_active) disabled> Bật</label>
+                        <button type="button" class="btn gl__edit" data-gl-edit>Sửa</button>
+                        <button class="btn btn--primary gl__save">Lưu</button>
+                        <button type="button" class="btn gl__save" data-gl-cancel>Huỷ</button>
                         <button class="btn btn--danger" form="xoa-{{ $rule->id }}" onclick="return confirm('Xoá quy tắc này?')">Xoá</button>
                     </div>
                 </form>
@@ -58,4 +61,31 @@
             </form>
         </section>
     @endforeach
+
+    <script>
+        // Bấm "Sửa": mở khoá ô chữ + ô Bật, đổi nút Sửa thành Lưu / Huỷ. "Huỷ": trả nội dung cũ, khoá lại.
+        document.addEventListener('click', (e) => {
+            const edit = e.target.closest('[data-gl-edit]');
+            const cancel = e.target.closest('[data-gl-cancel]');
+            const row = (edit || cancel)?.closest('[data-gl-row]');
+            if (!row) return;
+            const ta = row.querySelector('textarea');
+            const box = row.querySelector('input[type=checkbox]');
+            if (edit) {
+                row.dataset.body = ta.value;
+                row.dataset.active = box.checked ? '1' : '';
+                row.classList.add('is-editing');
+                ta.readOnly = false;
+                box.disabled = false;
+                ta.focus();
+                ta.setSelectionRange(ta.value.length, ta.value.length);
+            } else {
+                ta.value = row.dataset.body ?? ta.value;
+                box.checked = row.dataset.active === '1';
+                row.classList.remove('is-editing');
+                ta.readOnly = true;
+                box.disabled = true;
+            }
+        });
+    </script>
 @endsection

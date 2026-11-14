@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Hashtag;
 use App\Models\Outfit;
+use App\Models\OutfitLayout;
 use App\Support\PromptComposer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -68,10 +69,15 @@ class OutfitController extends Controller
             ->get()
             ->sortBy(fn (Outfit $o) => $ids->search($o->id))->values();
 
+        // Khung ảnh lấy từ layout ĐÃ DUYỆT (?layout=mã; mặc định layout đầu tiên)
+        $layouts = OutfitLayout::usable($user)->get(['id', 'code', 'name', 'prompt']);
+        $layout = $layouts->firstWhere('code', (string) $request->query('layout')) ?? $layouts->first();
+
         return view('outfits.compose', [
             'outfits' => $outfits,
-            'prompt' => $outfits->isEmpty() ? '' : PromptComposer::compose($outfits, $user->commonPrompt()),
-            'common' => $user->commonPrompt(),
+            'layouts' => $layouts,
+            'layout' => $layout,
+            'prompt' => $outfits->isEmpty() || ! $layout ? '' : PromptComposer::compose($outfits, $layout->prompt),
             'fix' => $user->fixPrompt(),
         ]);
     }

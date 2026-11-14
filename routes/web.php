@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CoverTemplateController;
 use App\Http\Controllers\GuidelineController;
+use App\Http\Controllers\OutfitLayoutController;
 use App\Http\Controllers\OutfitController;
 use App\Http\Controllers\RenderController;
 use App\Http\Controllers\SettingsController;
@@ -27,8 +28,12 @@ Route::middleware('auth')->group(function () {
     Route::get('renders/{render}/image', [RenderController::class, 'image'])->name('renders.image');
 
     Route::get('cover-templates', [CoverTemplateController::class, 'index'])->name('cover-templates.index');
-    Route::put('cover-templates/{coverTemplate}', [CoverTemplateController::class, 'update'])->name('cover-templates.update');
-    Route::get('cover-templates/{coverTemplate}/image', [CoverTemplateController::class, 'image'])->name('cover-templates.image');
+    Route::put('cover-templates/{template}', [CoverTemplateController::class, 'update'])->name('cover-templates.update');
+    Route::get('cover-templates/{template}/image', [CoverTemplateController::class, 'image'])->name('cover-templates.image');
+
+    Route::get('outfit-layouts', [OutfitLayoutController::class, 'index'])->name('outfit-layouts.index');
+    Route::put('outfit-layouts/{template}', [OutfitLayoutController::class, 'update'])->name('outfit-layouts.update');
+    Route::get('outfit-layouts/{template}/image', [OutfitLayoutController::class, 'image'])->name('outfit-layouts.image');
 
     Route::get('guidelines', [GuidelineController::class, 'index'])->name('guidelines.index');
     Route::post('guidelines', [GuidelineController::class, 'store'])->name('guidelines.store');

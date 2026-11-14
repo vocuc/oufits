@@ -5,20 +5,21 @@ namespace App\Support;
 use App\Models\Outfit;
 use Illuminate\Support\Collection;
 
-/** Ghép phần dùng chung + danh sách outfit thành một prompt hoàn chỉnh. */
+/**
+ * Ghép prompt LAYOUT (Mẫu ảnh outfit đã duyệt) + danh sách outfit thành một prompt hoàn chỉnh.
+ * Không còn "prompt dùng chung": phần khung ảnh / người mẫu / chữ nằm trong prompt của layout (có chỗ {HOOK}).
+ */
 class PromptComposer
 {
-    public static function defaultCommon(): string
-    {
-        return trim(file_get_contents(resource_path('prompts/chung.txt')));
-    }
+    /** Hook mặc định khi ghép tay trên web (worker luôn truyền hook riêng). */
+    public const DEFAULT_HOOK = 'Mặc xinh mỗi ngày';
 
     public static function defaultFix(): string
     {
         return trim(file_get_contents(resource_path('prompts/sua-nhanh.txt')));
     }
 
-    /** Câu mở đầu, đổi theo số outfit. Kiểu ảnh (selfie, lookbook...) do phần dùng chung quyết định. */
+    /** Câu mở đầu, đổi theo số outfit. Kiểu ảnh do prompt của layout quyết định. */
     public static function header(int $count): string
     {
         if ($count <= 1) {
@@ -40,8 +41,16 @@ class PromptComposer
         return $head."\n".trim((string) $outfit->items);
     }
 
+    /** Prompt layout với {HOOK} đã thay bằng hook (dấu " trong hook đổi thành ' để không vỡ câu trích). */
+    public static function layoutText(string $layoutPrompt, ?string $hook = null): string
+    {
+        $hook = str_replace('"', "'", trim((string) $hook) ?: self::DEFAULT_HOOK);
+
+        return str_replace('{HOOK}', $hook, trim($layoutPrompt));
+    }
+
     /** @param  Collection<int, Outfit>  $outfits */
-    public static function compose(Collection $outfits, string $common): string
+    public static function compose(Collection $outfits, string $layoutPrompt, ?string $hook = null): string
     {
         $count = $outfits->count();
         $list = $outfits->values()
@@ -49,7 +58,7 @@ class PromptComposer
             ->implode("\n\n");
 
         return self::header($count)."\n\n"
-            .trim($common)."\n\n"
+            .self::layoutText($layoutPrompt, $hook)."\n\n"
             .($count > 1 ? "DANH SÁCH OUTFIT:\n\n" : '')
             .$list;
     }

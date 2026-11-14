@@ -38,6 +38,7 @@ class CoverTemplateTest extends TestCase
 
         $t = CoverTemplate::query()->sole();
         $first = $t->image_path;
+        $firstUrl = $t->url();
         Storage::disk('local')->assertExists($first);
         $t->update(['status' => 'approved', 'request' => 'Chữ to hơn']);
 
@@ -45,6 +46,9 @@ class CoverTemplateTest extends TestCase
             ->assertOk()->assertJsonPath('data.status', 'approved')->assertJsonPath('data.request', 'Chữ to hơn')
             ->assertJsonPath('data.how_to', 'Dải đen mờ phía trên');
         Storage::disk('local')->assertMissing($first);
+        $this->assertNotSame($firstUrl, $t->fresh()->url(), 'Thay ảnh thì link ảnh phải đổi (tránh cache ảnh cũ)');
+        $user->refresh();
+        $this->assertContains($this->actingAs($user)->get($t->fresh()->url())->status(), [200, 302]);
         $this->assertSame(1, CoverTemplate::query()->count());
 
         $this->upsert($token, ['code' => '02', 'name' => 'TikTok'])->assertCreated();

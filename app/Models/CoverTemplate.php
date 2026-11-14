@@ -58,7 +58,10 @@ class CoverTemplate extends Model
 
     public function url(bool $thumb = false): ?string
     {
-        return $this->image_path ? route('cover-templates.image', ['coverTemplate' => $this, 'thumb' => $thumb ? 1 : null]) : null;
+        // v đổi theo file ảnh: ảnh mẫu bị thay (cùng id) thì trình duyệt không dùng lại ảnh / link S3 cũ đã cache
+        return $this->image_path ? route('cover-templates.image', [
+            'coverTemplate' => $this, 'thumb' => $thumb ? 1 : null, 'v' => substr(md5($this->image_path), 0, 10),
+        ]) : null;
     }
 
     public function toApi(): array

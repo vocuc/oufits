@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CoverTemplateController;
+use App\Http\Controllers\GuidelineController;
 use App\Http\Controllers\OutfitController;
 use App\Http\Controllers\RenderController;
 use App\Http\Controllers\SettingsController;
@@ -28,6 +29,11 @@ Route::middleware('auth')->group(function () {
     Route::get('cover-templates', [CoverTemplateController::class, 'index'])->name('cover-templates.index');
     Route::put('cover-templates/{coverTemplate}', [CoverTemplateController::class, 'update'])->name('cover-templates.update');
     Route::get('cover-templates/{coverTemplate}/image', [CoverTemplateController::class, 'image'])->name('cover-templates.image');
+
+    Route::get('guidelines', [GuidelineController::class, 'index'])->name('guidelines.index');
+    Route::post('guidelines', [GuidelineController::class, 'store'])->name('guidelines.store');
+    Route::put('guidelines/{guideline}', [GuidelineController::class, 'update'])->name('guidelines.update');
+    Route::delete('guidelines/{guideline}', [GuidelineController::class, 'destroy'])->name('guidelines.destroy');
 
     Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('settings/prompts', [SettingsController::class, 'updatePrompts'])->name('settings.prompts');

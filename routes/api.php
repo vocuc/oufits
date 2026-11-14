@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CoverTemplateApiController;
+use App\Http\Controllers\Api\GuidelineApiController;
 use App\Http\Controllers\Api\OutfitApiController;
 use App\Http\Controllers\Api\RenderApiController;
 use App\Http\Controllers\Api\StylingIdeaApiController;
@@ -30,6 +31,9 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     // Ảnh gốc lô phối đồ A51
     Route::post('renders', [RenderApiController::class, 'store']);
     Route::get('renders/used-outfits', [RenderApiController::class, 'usedOutfits']);
+
+    // Quy tắc chủ shop viết trên web (tạo outfit / ảnh bìa / đặt hook), chỉ đọc
+    Route::get('guidelines', [GuidelineApiController::class, 'index']);
 
     // Thư viện ảnh bìa lô phối đồ (worker chỉ dùng mẫu đã duyệt)
     Route::get('cover-templates', [CoverTemplateApiController::class, 'index']);

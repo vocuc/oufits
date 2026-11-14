@@ -30,6 +30,7 @@
                             <a href="{{ route('outfits.create') }}" class="account__item">+ Thêm outfit</a>
                             <a href="{{ route('renders.index') }}" class="account__item">Thư viện ảnh</a>
                             <a href="{{ route('cover-templates.index') }}" class="account__item">Thư viện ảnh bìa</a>
+                            <a href="{{ route('guidelines.index') }}" class="account__item">Quy tắc</a>
                             <a href="{{ route('settings.edit') }}" class="account__item">Prompt dùng chung</a>
                             <form method="post" action="{{ route('logout') }}">
                                 @csrf

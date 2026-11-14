@@ -258,3 +258,18 @@ main { padding-top: 20px; padding-bottom: 48px; }
     .ctpl__row { grid-template-columns: 1fr; }
     .ctpl__img img { max-width: 260px; }
 }
+
+/* Quy tắc (/guidelines) */
+.gl { margin: 22px 0; display: grid; gap: 8px; scroll-margin-top: 80px; }
+.gl h2 { margin: 0 0 4px; font-size: 18px; }
+.gl__row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; scroll-margin-top: 80px; }
+.gl__row.is-off textarea { color: var(--muted); text-decoration: line-through; }
+.gl__row--new { border-style: dashed; }
+.gl__no { font-weight: 700; color: var(--accent); padding-top: 8px; text-align: center; }
+.gl__row textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
+.gl__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.gl__toggle { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+@media (max-width: 760px) {
+    .gl__row { grid-template-columns: 22px minmax(0, 1fr); }
+    .gl__actions { grid-column: 2; }
+}

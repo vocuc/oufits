@@ -33,6 +33,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function guidelines(): HasMany
+    {
+        return $this->hasMany(Guideline::class);
+    }
+
     public function coverTemplates(): HasMany
     {
         return $this->hasMany(CoverTemplate::class);

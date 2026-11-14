@@ -126,6 +126,47 @@ class OutfitApiController extends Controller
     }
 
     /**
+     * Thêm / bớt hashtag của outfit (chỉ outfit của mình). Hashtag khác giữ nguyên.
+     * { "add": ["henho", "dichoi"], "remove": ["vay"] } — mỗi phần là mảng hoặc chuỗi "a, #b c".
+     * Tag có trong cả add và remove -> remove thắng.
+     */
+    public function hashtags(Request $request, Outfit $outfit): JsonResponse
+    {
+        abort_unless($outfit->user_id === $request->user()->id, 404);
+
+        $request->validate([
+            'add' => ['nullable'],
+            'remove' => ['nullable'],
+        ]);
+        $add = $this->tagList($request->input('add'), 'add');
+        $remove = $this->tagList($request->input('remove'), 'remove');
+        if ($add === [] && $remove === []) {
+            throw ValidationException::withMessages(['add' => 'Cần ít nhất một hashtag trong add hoặc remove.']);
+        }
+
+        $current = $outfit->hashtags()->pluck('name')->all();
+        $names = array_values(array_diff(array_unique([...$current, ...$add]), $remove));
+        DB::transaction(fn () => $outfit->syncHashtags($names));
+
+        return response()->json(['data' => $this->present($outfit->load('hashtags'))]);
+    }
+
+    /** @return list<string> hashtag đã chuẩn hoá */
+    private function tagList(mixed $input, string $field): array
+    {
+        if ($input === null || $input === '') {
+            return [];
+        }
+        if (! is_string($input) && ! is_array($input)) {
+            throw ValidationException::withMessages([$field => "$field phải là chuỗi hoặc mảng."]);
+        }
+
+        return collect(is_array($input) ? $input : preg_split('/[\s,]+/', $input))
+            ->map(fn ($t) => is_string($t) ? Hashtag::normalize($t) : '')
+            ->filter()->unique()->values()->all();
+    }
+
+    /**
      * Prompt hoàn chỉnh cho các outfit (giống trang /compose): phần dùng chung của tài khoản + outfit theo đúng thứ tự ids,
      * kèm câu sửa nhanh của tài khoản. Dùng cho skill tạo lookbook (mỗi lượt ChatGPT gọi với 1 id).
      * Id không thuộc tài khoản / không tồn tại -> 422 (không lặng lẽ bỏ qua, để người gọi biết prompt thiếu outfit).

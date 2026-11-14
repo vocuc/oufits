@@ -23,6 +23,12 @@ class StylingEngine
 
     public const NEG_EXPECTED = 3.0;
 
+    /** Trọng số "điểm 0" cộng vào mẫu số khi chấm (làm mượt bộ ít cặp). */
+    public const PRIOR_WEIGHT = 3.0;
+
+    /** Mỗi món chính (đầm / phần dưới cùng loại + màu) xuất hiện tối đa bấy nhiêu lần trong kết quả gợi ý. */
+    public const MAX_SAME_MAIN = 2;
+
     private const NEG_LEVELS = ['cat', 'color', 'material', 'pattern', 'cat_shoe'];
 
     /** @var array<string, array{0: float, 1: int}>|null */
@@ -270,7 +276,8 @@ class StylingEngine
             }
         }
         $issues = self::hardIssues($items);
-        $mean = $weight > 0 ? $sum / $weight : 0.0;
+        // bộ ít cặp bằng chứng bị kéo về 0 (prior PRIOR_WEIGHT ở điểm 0) -> không ưu tiên bộ quá ít món
+        $mean = $sum / ($weight + self::PRIOR_WEIGHT);
         $total = (int) round(max(0, min(100, 50 + 50 * $mean - 15 * count($issues))));
         usort($pairs, fn ($x, $y) => $x['score'] <=> $y['score']);
 
@@ -363,15 +370,15 @@ class StylingEngine
         }
 
         $fixedSlots = array_count_values(array_map(fn ($i) => $i['slot'] ?? 'other', $fixed));
-        $plans = [['dress', 'outer?', 'socks?', 'bag?'], ['bottom', 'top', 'outer?', 'socks?', 'bag?']];
+        $plans = [['dress', 'bag', 'outer?', 'socks?'], ['bottom', 'top', 'bag', 'outer?', 'socks?']];
         $results = [];
         foreach ($plans as $plan) {
             $beam = [[$fixed, 0]];
             foreach ($plan as $step) {
                 $optional = str_ends_with($step, '?');
                 $slot = rtrim($step, '?');
-                if (($fixedSlots[$slot] ?? 0) > 0) {
-                    continue;
+                if (($fixedSlots[$slot] ?? 0) > 0 || empty($bySlot[$slot])) {
+                    continue; // đã có món cố định, hoặc kho chưa có món nào ở vị trí này
                 }
                 $next = [];
                 foreach ($beam as [$chosen]) {
@@ -384,7 +391,7 @@ class StylingEngine
                     }
                 }
                 usort($next, fn ($x, $y) => $y[1] <=> $x[1]);
-                $beam = array_slice($next, 0, 12);
+                $beam = array_slice($next, 0, 30);
             }
             foreach ($beam as [$chosen]) {
                 $results[] = $chosen;
@@ -398,6 +405,7 @@ class StylingEngine
             ->filter()->all();
         $out = [];
         $seen = [];
+        $mainUsed = [];
         $scored = array_map(fn ($items) => [$items, $this->score($items, $shoe, $context)], $results);
         usort($scored, fn ($x, $y) => $y[1]['score'] <=> $x[1]['score']);
         foreach ($scored as [$items, $score]) {
@@ -416,6 +424,12 @@ class StylingEngine
             if ($dup) {
                 continue;
             }
+            $main = collect($items)->first(fn ($i) => in_array($i['slot'] ?? '', ['dress', 'bottom'], true));
+            $mainKey = $main ? $main['category'].':'.($main['color'] ?? '') : '';
+            if (($mainUsed[$mainKey] ?? 0) >= self::MAX_SAME_MAIN) {
+                continue;
+            }
+            $mainUsed[$mainKey] = ($mainUsed[$mainKey] ?? 0) + 1;
             $seen[$key] = true;
             $out[] = ['items' => array_values($items), 'score' => $score['score'], 'pairs' => array_slice($score['pairs'], 0, 6)];
             if (count($out) >= $n) {

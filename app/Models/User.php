@@ -38,6 +38,16 @@ class User extends Authenticatable
         return $this->hasMany(Outfit::class);
     }
 
+    public function stylingRules(): HasMany
+    {
+        return $this->hasMany(StylingRule::class);
+    }
+
+    public function stylingIdeas(): HasMany
+    {
+        return $this->hasMany(StylingIdea::class);
+    }
+
     /** Prompt dùng chung của tài khoản; chưa tự sửa thì dùng mặc định. */
     public function commonPrompt(): string
     {

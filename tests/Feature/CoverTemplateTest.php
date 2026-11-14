@@ -9,7 +9,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-/** Thư viện ảnh bìa: POST/GET /api/cover-templates, trang /cover-templates (duyệt + yêu cầu). */
+/** Mẫu ảnh bìa: POST/GET /api/cover-templates, trang /cover-templates (duyệt + yêu cầu). */
 class CoverTemplateTest extends TestCase
 {
     use RefreshDatabase;
@@ -64,7 +64,7 @@ class CoverTemplateTest extends TestCase
         $t = $user->coverTemplates()->create(['code' => '05', 'name' => 'Tạp chí', 'how_to' => 'Chữ có chân']);
 
         $this->actingAs($user)->get('/cover-templates')->assertOk()
-            ->assertSee('Thư viện ảnh bìa')->assertSee('05 · Tạp chí')->assertSee('Chờ duyệt');
+            ->assertSee('Mẫu ảnh bìa')->assertSee('05 · Tạp chí')->assertSee('Chờ duyệt');
 
         $this->actingAs($user)->put("/cover-templates/{$t->id}", ['request' => '  Đổi màu hồng đậm  ', 'status' => ''])
             ->assertRedirect();

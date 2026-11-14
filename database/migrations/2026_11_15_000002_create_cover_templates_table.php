@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Thư viện ảnh bìa lô phối đồ (/cover-templates): mỗi mẫu = ảnh mẫu + cách làm (Claude ghi),
+ * Mẫu ảnh bìa lô phối đồ (/cover-templates): mỗi mẫu = ảnh mẫu + cách làm (Claude ghi),
  * trạng thái duyệt (chủ shop duyệt trên web; worker chỉ dùng mẫu "approved") và cột "request" để chủ shop ghi yêu cầu.
  */
 return new class extends Migration

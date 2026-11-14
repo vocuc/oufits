@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 /**
- * Trang "Thư viện ảnh bìa": các mẫu ảnh bìa lô phối đồ. Chủ shop duyệt / bỏ từng mẫu và ghi yêu cầu;
+ * Trang "Mẫu ảnh bìa": các mẫu ảnh bìa lô phối đồ. Chủ shop duyệt / bỏ từng mẫu và ghi yêu cầu;
  * worker chỉ làm bìa theo mẫu đã duyệt (GET /api/cover-templates?status=approved).
  */
 class CoverTemplateController extends Controller

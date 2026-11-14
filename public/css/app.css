@@ -237,7 +237,7 @@ main { padding-top: 20px; padding-bottom: 48px; }
 /* Tải thêm outfit khi cuộn */
 .loadmore { display: flex; justify-content: center; padding: 24px 0 8px; }
 
-/* Thư viện ảnh bìa (/cover-templates) */
+/* Mẫu ảnh bìa (/cover-templates) */
 .ctpl { display: grid; gap: 12px; margin: 18px 0; }
 .ctpl__head, .ctpl__row { display: grid; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
 .ctpl__head { font-size: 13px; font-weight: 600; color: var(--muted); padding: 0 14px; }

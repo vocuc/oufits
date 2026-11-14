@@ -36,7 +36,7 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     Route::get('guidelines', [GuidelineApiController::class, 'index']);
     Route::post('guidelines', [GuidelineApiController::class, 'store']);
 
-    // Thư viện ảnh bìa lô phối đồ (worker chỉ dùng mẫu đã duyệt)
+    // Mẫu ảnh bìa lô phối đồ (worker chỉ dùng mẫu đã duyệt)
     Route::get('cover-templates', [CoverTemplateApiController::class, 'index']);
     Route::post('cover-templates', [CoverTemplateApiController::class, 'upsert']);
 

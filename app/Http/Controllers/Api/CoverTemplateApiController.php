@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 /**
- * Thư viện ảnh bìa lô phối đồ (worker / Claude).
+ * Mẫu ảnh bìa lô phối đồ (worker / Claude).
  *   GET  /api/cover-templates?status=approved -> các mẫu (kèm status, request = yêu cầu chủ shop ghi trên web)
  *   POST /api/cover-templates (multipart) code, name, hook_type?, how_to?, sort?, image? -> tạo / cập nhật theo code.
  *        Mẫu mới luôn ở "Chờ duyệt". API không bao giờ đổi status hay request (chỉ chủ shop sửa trên web).

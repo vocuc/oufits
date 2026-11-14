@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Thư viện ảnh bìa · OOTD Prompt')
+@section('title', 'Mẫu ảnh bìa · OOTD Prompt')
 
 @section('content')
     <section class="filters">
-        <h1 style="margin:0 0 6px">Thư viện ảnh bìa</h1>
+        <h1 style="margin:0 0 6px">Mẫu ảnh bìa</h1>
         <p class="muted" style="margin:0">
             Các cách làm ảnh bìa cho lô phối đồ A51. Worker phối đồ <b>chỉ làm bìa theo mẫu đã duyệt</b> và đọc cột
             "Yêu cầu" của mẫu đó trước khi làm.

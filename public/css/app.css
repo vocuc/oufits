@@ -288,3 +288,10 @@ main { padding-top: 20px; padding-bottom: 48px; }
 .gl__edit { background: transparent; border-color: var(--line); color: var(--muted); }
 .gl__edit:hover { color: inherit; border-color: var(--muted); }
 .gl__toggle input:disabled { cursor: default; }
+
+/* Ô chữ của trang Quy tắc + cột Yêu cầu (Mẫu ảnh bìa / outfit): theo màu giao diện (chế độ tối chữ sáng) */
+.gl__row textarea, .ctpl__req textarea { color: var(--text); background: var(--bg); }
+.gl__row[data-gl-row] textarea[readonly] { color: var(--text); background: transparent; }
+.gl__row.is-off textarea, .gl__row.is-off textarea[readonly] { color: var(--muted); }
+.gl__row textarea::placeholder, .ctpl__req textarea::placeholder { color: var(--muted); }
+.gl__row textarea:focus, .ctpl__req textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }

@@ -33,6 +33,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function coverTemplates(): HasMany
+    {
+        return $this->hasMany(CoverTemplate::class);
+    }
+
     public function outfits(): HasMany
     {
         return $this->hasMany(Outfit::class);

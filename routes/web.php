@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\CoverTemplateController;
 use App\Http\Controllers\OutfitController;
 use App\Http\Controllers\RenderController;
 use App\Http\Controllers\SettingsController;
@@ -23,6 +24,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('renders', [RenderController::class, 'index'])->name('renders.index');
     Route::get('renders/{render}/image', [RenderController::class, 'image'])->name('renders.image');
+
+    Route::get('cover-templates', [CoverTemplateController::class, 'index'])->name('cover-templates.index');
+    Route::put('cover-templates/{coverTemplate}', [CoverTemplateController::class, 'update'])->name('cover-templates.update');
+    Route::get('cover-templates/{coverTemplate}/image', [CoverTemplateController::class, 'image'])->name('cover-templates.image');
 
     Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('settings/prompts', [SettingsController::class, 'updatePrompts'])->name('settings.prompts');

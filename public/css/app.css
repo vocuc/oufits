@@ -236,3 +236,25 @@ main { padding-top: 20px; padding-bottom: 48px; }
 
 /* Tải thêm outfit khi cuộn */
 .loadmore { display: flex; justify-content: center; padding: 24px 0 8px; }
+
+/* Thư viện ảnh bìa (/cover-templates) */
+.ctpl { display: grid; gap: 12px; margin: 18px 0; }
+.ctpl__head, .ctpl__row { display: grid; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.ctpl__head { font-size: 13px; font-weight: 600; color: var(--muted); padding: 0 14px; }
+.ctpl__row { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; scroll-margin-top: 80px; }
+.ctpl__img img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; display: block; }
+.ctpl__how { display: grid; gap: 8px; align-content: start; font-size: 14px; }
+.ctpl__how .chip { justify-self: start; }
+.ctpl__title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ctpl__status { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--line); }
+.ctpl__status--approved { background: #d9f5e3; color: #17733b; }
+.ctpl__status--rejected { background: #fde2e2; color: #b42318; }
+.ctpl__text { white-space: pre-wrap; line-height: 1.5; }
+.ctpl__req { display: grid; gap: 8px; align-content: start; }
+.ctpl__req textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
+.ctpl__save { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 760px) {
+    .ctpl__head { display: none; }
+    .ctpl__row { grid-template-columns: 1fr; }
+    .ctpl__img img { max-width: 260px; }
+}

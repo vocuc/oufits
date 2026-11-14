@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CoverTemplateApiController;
 use App\Http\Controllers\Api\OutfitApiController;
 use App\Http\Controllers\Api\RenderApiController;
 use App\Http\Controllers\Api\StylingIdeaApiController;
@@ -29,6 +30,10 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     // Ảnh gốc lô phối đồ A51
     Route::post('renders', [RenderApiController::class, 'store']);
     Route::get('renders/used-outfits', [RenderApiController::class, 'usedOutfits']);
+
+    // Thư viện ảnh bìa lô phối đồ (worker chỉ dùng mẫu đã duyệt)
+    Route::get('cover-templates', [CoverTemplateApiController::class, 'index']);
+    Route::post('cover-templates', [CoverTemplateApiController::class, 'upsert']);
 
     // Món đồ + độ hợp giữa các món (D:\FlowKit\a51-skills\outfit-video\thiet-ke-item.txt)
     Route::put('outfits/{outfit}/items', [StylingItemApiController::class, 'putItems']);

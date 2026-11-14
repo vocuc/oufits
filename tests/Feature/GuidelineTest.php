@@ -54,5 +54,12 @@ class GuidelineTest extends TestCase
         $this->withToken($token)->getJson('/api/guidelines?category=cover')->assertOk()
             ->assertJsonCount(1, 'data')->assertJsonPath('data.0.body', 'Logo không che giày');
         $this->withToken($token)->getJson('/api/guidelines?category=abc')->assertUnprocessable();
+
+        $this->withToken($token)->postJson('/api/guidelines', ['category' => 'cover', 'body' => ' Khổ 3:4 '])
+            ->assertCreated()->assertJsonPath('data.sort', 2)->assertJsonPath('created', true);
+        $this->withToken($token)->postJson('/api/guidelines', ['category' => 'cover', 'body' => 'Khổ 3:4'])
+            ->assertOk()->assertJsonPath('created', false);
+        $this->withToken($token)->postJson('/api/guidelines', ['category' => 'abc', 'body' => 'x'])->assertUnprocessable();
+        $this->assertSame(2, $user->guidelines()->where('category', 'cover')->count());
     }
 }

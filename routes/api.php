@@ -32,8 +32,9 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     Route::post('renders', [RenderApiController::class, 'store']);
     Route::get('renders/used-outfits', [RenderApiController::class, 'usedOutfits']);
 
-    // Quy tắc chủ shop viết trên web (tạo outfit / ảnh bìa / đặt hook), chỉ đọc
+    // Quy tắc chủ shop viết trên web (tạo outfit / ảnh bìa / đặt hook); API chỉ đọc + thêm
     Route::get('guidelines', [GuidelineApiController::class, 'index']);
+    Route::post('guidelines', [GuidelineApiController::class, 'store']);
 
     // Thư viện ảnh bìa lô phối đồ (worker chỉ dùng mẫu đã duyệt)
     Route::get('cover-templates', [CoverTemplateApiController::class, 'index']);

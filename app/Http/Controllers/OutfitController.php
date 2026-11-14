@@ -31,7 +31,7 @@ class OutfitController extends Controller
         $limit = $offset === 0 ? self::FIRST_PAGE : self::MORE_PAGE;
         $query = $user->outfits()->withAllHashtags($selected);
         $total = (clone $query)->count();
-        $outfits = $query->with('hashtags')
+        $outfits = $query->with('hashtags')->withCount('renders')
             ->orderByDesc('created_at')->orderByDesc('id')
             ->skip($offset)->take($limit)
             ->get();
@@ -79,7 +79,7 @@ class OutfitController extends Controller
     public function show(Request $request, Outfit $outfit)
     {
         $this->authorizeView($request, $outfit);
-        $outfit->load('hashtags');
+        $outfit->load('hashtags')->loadCount('renders');
 
         return view('outfits.show', compact('outfit'));
     }

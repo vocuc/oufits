@@ -35,6 +35,9 @@
         <div class="card__actions">
             <button type="button" class="btn btn--primary" data-copy="p-{{ $outfit->id }}">Copy outfit</button>
             <a href="{{ route('outfits.show', $outfit) }}" class="btn">Chi tiết</a>
+            @if (($outfit->renders_count ?? 0) > 0)
+                <a href="{{ route('renders.index', ['outfit' => $outfit->id]) }}" class="btn">Ảnh ({{ $outfit->renders_count }})</a>
+            @endif
         </div>
     </article>
 @endforeach

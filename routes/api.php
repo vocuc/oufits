@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\OutfitApiController;
+use App\Http\Controllers\Api\RenderApiController;
 use App\Http\Controllers\Api\StylingIdeaApiController;
 use App\Http\Controllers\Api\StylingItemApiController;
 use App\Http\Controllers\Api\StylingRuleApiController;
@@ -24,6 +25,10 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     Route::put('styling-ideas', [StylingIdeaApiController::class, 'upsert']);
     Route::post('styling-ideas/{id}/used', [StylingIdeaApiController::class, 'used'])->whereNumber('id');
     Route::delete('styling-ideas/{id}', [StylingIdeaApiController::class, 'destroy'])->whereNumber('id');
+
+    // Ảnh gốc lô phối đồ A51
+    Route::post('renders', [RenderApiController::class, 'store']);
+    Route::get('renders/used-outfits', [RenderApiController::class, 'usedOutfits']);
 
     // Món đồ + độ hợp giữa các món (D:\FlowKit\a51-skills\outfit-video\thiet-ke-item.txt)
     Route::put('outfits/{outfit}/items', [StylingItemApiController::class, 'putItems']);

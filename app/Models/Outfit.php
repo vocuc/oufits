@@ -51,6 +51,12 @@ class Outfit extends Model
         return $this->belongsToMany(Hashtag::class)->orderBy('name');
     }
 
+    /** Ảnh gốc lô phối đồ tạo từ outfit này (Thư viện ảnh). */
+    public function renders(): HasMany
+    {
+        return $this->hasMany(OutfitRender::class);
+    }
+
     /** Các món đã tách từ items (cột "items" là văn bản nên quan hệ đặt tên itemsList). */
     public function itemsList(): HasMany
     {

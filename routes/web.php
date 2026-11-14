@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\OutfitController;
+use App\Http\Controllers\RenderController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,9 @@ Route::middleware('auth')->group(function () {
     Route::get('compose', [OutfitController::class, 'compose'])->name('outfits.compose');
     Route::get('outfits/{outfit}/cover', [OutfitController::class, 'cover'])->name('outfits.cover');
     Route::resource('outfits', OutfitController::class)->except('index');
+
+    Route::get('renders', [RenderController::class, 'index'])->name('renders.index');
+    Route::get('renders/{render}/image', [RenderController::class, 'image'])->name('renders.image');
 
     Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('settings/prompts', [SettingsController::class, 'updatePrompts'])->name('settings.prompts');

@@ -42,6 +42,7 @@
             <div class="block__head">
                 <h2>Item &amp; cách phối</h2>
                 <button type="button" class="btn" data-copy="items">Copy outfit</button>
+                <a href="{{ route('renders.index', ['outfit' => $outfit->id]) }}" class="btn">Ảnh đã tạo ({{ $outfit->renders_count }})</a>
                 <a href="{{ route('outfits.compose', ['ids' => [$outfit->id]]) }}" class="btn btn--primary">Tạo prompt</a>
             </div>
             <pre id="items" class="prompt">{{ \App\Support\PromptComposer::outfitBlock($outfit) }}</pre>

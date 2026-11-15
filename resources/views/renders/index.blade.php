@@ -1,15 +1,18 @@
 @extends('layouts.app')
 
 @section('content')
+    @php($showRatings = config('app.show_ratings'))
     <section class="filters">
         <h1 style="margin:0 0 6px">Thư viện ảnh</h1>
-        <p class="muted" style="margin:0">Ảnh gốc ChatGPT tạo cho lô phối đồ A51 (chưa in câu hook). Chấm 1–10 theo độ hợp shop: điểm cao thì các outfit sau phối giống kiểu này hơn, điểm thấp thì tránh.</p>
+        <p class="muted" style="margin:0">Ảnh gốc ChatGPT tạo cho lô phối đồ A51 (chưa chèn logo).@if ($showRatings) Chấm 1–10 theo độ hợp shop: điểm cao thì các outfit sau phối giống kiểu này hơn, điểm thấp thì tránh.@endif</p>
+        @if ($showRatings)
         <div class="chips">
             @foreach (['' => 'Tất cả', '0' => 'Chưa chấm', '1' => 'Đã chấm'] as $value => $label)
                 <a href="{{ route('renders.index', array_filter(['outfit' => $outfit?->id, 'product' => $productId, 'rated' => $value], fn ($v) => $v !== null && $v !== '')) }}"
                    class="chip {{ (string) $rated === (string) $value ? 'is-active' : '' }}">{{ $label }}</a>
             @endforeach
         </div>
+        @endif
         @if ($outfit || $productId)
             <div class="active">
                 <span class="muted">Đang lọc:</span>
@@ -42,6 +45,7 @@
                         @endif
                         {{ $render->created_at?->format('d/m/Y H:i') }}
                     </p>
+                    @if ($showRatings)
                     <form method="POST" action="{{ route('renders.rate', $render) }}" class="rate">
                         @csrf
                         @method('PUT')
@@ -58,6 +62,7 @@
                             @endfor
                         </div>
                     </form>
+                    @endif
                 </article>
             @endforeach
         </div>

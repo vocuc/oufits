@@ -15,6 +15,9 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    // Chấm điểm ảnh (1-10) ở Thư viện ảnh: 2026-11-15 ẩn vì worker chọn outfit có sẵn, không dùng điểm. Dữ liệu điểm cũ vẫn giữ.
+    'show_ratings' => (bool) env('SHOW_RATINGS', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

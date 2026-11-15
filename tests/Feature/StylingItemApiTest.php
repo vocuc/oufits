@@ -212,7 +212,9 @@ class StylingItemApiTest extends TestCase
         $this->actingAs(User::factory()->create())->putJson(route('renders.rate', $render), ['rating' => 1])->assertNotFound();
         $this->assertSame(7, $render->fresh()->rating);
 
-        // Trang Thư viện ảnh: hiện điểm + lọc chưa chấm / đã chấm
+        // Trang Thư viện ảnh: mặc định ẩn phần chấm điểm; bật SHOW_RATINGS thì hiện điểm + lọc chưa chấm / đã chấm
+        $this->actingAs($user)->get('/renders')->assertOk()->assertDontSee('7/10')->assertDontSee('Độ hợp shop');
+        config(['app.show_ratings' => true]);
         $this->actingAs($user)->get('/renders')->assertOk()->assertSee('7/10');
         $this->actingAs($user)->get('/renders?rated=0')->assertOk()->assertSee('Chưa có ảnh nào.');
         $this->actingAs($user)->get('/renders?rated=1')->assertOk()->assertSee('7/10');

@@ -19,18 +19,12 @@ class OutfitLayoutController extends CoverTemplateController
         ];
     }
 
-    /** Chủ shop tự sửa prompt layout + câu sửa nhanh trên web (giữ nguyên trạng thái duyệt). */
+    /** Chủ shop tự sửa prompt layout trên web (giữ nguyên trạng thái duyệt; không có câu sửa nhanh). */
     public function updatePrompt(Request $request, string $template)
     {
         $t = $this->find($request, $template);
-        $data = $request->validate([
-            'prompt' => ['required', 'string', 'max:30000'],
-            'fix_prompt' => ['nullable', 'string', 'max:20000'],
-        ]);
-        $t->fill([
-            'prompt' => str_replace("\r\n", "\n", trim($data['prompt'])),
-            'fix_prompt' => trim(str_replace("\r\n", "\n", (string) ($data['fix_prompt'] ?? ''))) ?: null,
-        ])->save();
+        $data = $request->validate(['prompt' => ['required', 'string', 'max:30000']]);
+        $t->fill(['prompt' => str_replace("\r\n", "\n", trim($data['prompt']))])->save();
 
         return redirect()->to(url()->previous(route(OutfitLayout::ROUTE.'.index')).'#mau-'.$t->id)
             ->with('status', "Đã lưu prompt layout {$t->code}.");

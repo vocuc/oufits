@@ -89,10 +89,11 @@ class OutfitLayoutTest extends TestCase
         $user = User::factory()->create();
         $layout = $user->outfitLayouts()->create(['code' => '08', 'name' => 'Sửa prompt', 'prompt' => 'cũ', 'status' => 'approved']);
 
-        $this->actingAs($user)->put("/outfit-layouts/{$layout->id}/prompt", ['prompt' => "Dáng mới\r\nđứng nghiêng", 'fix_prompt' => ''])
+        $this->actingAs($user)->put("/outfit-layouts/{$layout->id}/prompt", ['prompt' => "Dáng mới\r\nđứng nghiêng"])
             ->assertRedirect();
         $layout->refresh();
-        $this->assertSame(["Dáng mới\nđứng nghiêng", null, 'approved'], [$layout->prompt, $layout->fix_prompt, $layout->status]);
+        $this->assertSame(["Dáng mới\nđứng nghiêng", 'approved'], [$layout->prompt, $layout->status]);
+        $this->actingAs($user)->get('/outfit-layouts')->assertDontSee('Câu sửa nhanh');
 
         $this->actingAs($user)->put("/outfit-layouts/{$layout->id}/prompt", ['prompt' => ''])->assertSessionHasErrors('prompt');
         $this->actingAs(User::factory()->create())->put("/outfit-layouts/{$layout->id}/prompt", ['prompt' => 'hack'])->assertNotFound();

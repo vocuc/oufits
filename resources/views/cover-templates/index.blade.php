@@ -58,8 +58,6 @@
                                     @method('PUT')
                                     <label>Prompt layout <small class="muted">(khung ảnh, người mẫu, dáng, bối cảnh, chữ; có <code>{HOOK}</code> thì ảnh có câu hook)</small>
                                         <textarea name="prompt" rows="18" required>{{ old('prompt', $t->prompt) }}</textarea></label>
-                                    <label>Câu sửa nhanh <small class="muted">(để trống = dùng câu sửa nhanh chung)</small>
-                                        <textarea name="fix_prompt" rows="8">{{ old('fix_prompt', $t->fix_prompt) }}</textarea></label>
                                     <button class="btn btn--primary">Lưu prompt</button>
                                 </form>
                             </details>

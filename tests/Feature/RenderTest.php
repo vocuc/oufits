@@ -73,5 +73,16 @@ class RenderTest extends TestCase
         $render = OutfitRender::query()->firstOrFail();
         $this->assertContains($this->actingAs($user)->get(route('renders.image', $render))->status(), [200, 302]);
         $this->actingAs(User::factory()->create())->get(route('renders.image', $render))->assertNotFound();
+
+        // Nút xoá trên thẻ outfit: xoá outfit + ảnh Thư viện ảnh của nó, quay lại đúng bộ lọc đang xem
+        $this->actingAs($user)->get('/')->assertSee('Xóa outfit này');
+        $paths = OutfitRender::query()->where('outfit_id', $b->id)->pluck('image_path');
+        $this->actingAs($user)->from('/?tags=abc')->delete(route('outfits.destroy', $b))->assertRedirect('/?tags=abc');
+        $this->assertNull($b->fresh());
+        $this->assertSame(0, OutfitRender::query()->where('outfit_id', $b->id)->count());
+        foreach ($paths as $path) {
+            Storage::disk('local')->assertMissing($path);
+        }
+        $this->actingAs($user)->from(route('outfits.show', $a))->delete(route('outfits.destroy', $a))->assertRedirect(route('outfits.index'));
     }
 }

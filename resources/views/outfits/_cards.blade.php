@@ -39,6 +39,12 @@
             @if (($outfit->renders_count ?? 0) > 0)
                 <a href="{{ route('renders.index', ['outfit' => $outfit->id]) }}" class="btn">Ảnh ({{ $outfit->renders_count }})</a>
             @endif
+            <form method="post" action="{{ route('outfits.destroy', $outfit) }}" style="display:inline"
+                  onsubmit="return confirm('Xóa outfit &quot;{{ addslashes($outfit->title) }}&quot;?{{ ($outfit->renders_count ?? 0) > 0 ? ' Sẽ xóa luôn '.$outfit->renders_count.' ảnh trong Thư viện ảnh và điểm đã chấm của outfit này.' : '' }} Không khôi phục được.')">
+                @csrf
+                @method('DELETE')
+                <button class="btn btn--danger" title="Xóa outfit này">Xóa</button>
+            </form>
         </div>
     </article>
 @endforeach

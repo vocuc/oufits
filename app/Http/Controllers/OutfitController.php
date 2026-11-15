@@ -127,9 +127,13 @@ class OutfitController extends Controller
     public function destroy(Request $request, Outfit $outfit)
     {
         $this->authorizeOwner($request, $outfit);
+        $outfit->renders()->get()->each->delete(); // xoá cả file ảnh Thư viện ảnh của outfit (không chỉ dòng DB)
         $outfit->delete();
+        // Xoá từ trang danh sách -> quay lại đúng trang / bộ lọc đang xem; xoá từ trang chi tiết -> về danh sách
+        $back = url()->previous(route('outfits.index'));
+        $back = str_starts_with($back, route('outfits.show', $outfit)) ? route('outfits.index') : $back;
 
-        return redirect()->route('outfits.index')->with('status', 'Đã xóa outfit.');
+        return redirect()->to($back)->with('status', 'Đã xóa outfit.');
     }
 
     /** Ảnh bìa (chủ outfit, hoặc ai đăng nhập nếu outfit công khai). */

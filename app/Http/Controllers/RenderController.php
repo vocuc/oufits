@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Outfit;
+use App\Models\OutfitRating;
 use App\Models\OutfitRender;
 use App\Support\StylingEngine;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /** Trang "Thư viện ảnh": ảnh gốc của lô phối đồ, lọc theo outfit (?outfit=) hoặc sản phẩm A51 (?product=). */
 class RenderController extends Controller
@@ -43,7 +45,18 @@ class RenderController extends Controller
         $data = $request->validate(['rating' => ['nullable', 'integer', 'min:1', 'max:10']]);
         $rating = isset($data['rating']) ? (int) $data['rating'] : null;
         if ($render->rating !== $rating) {
-            $render->update(['rating' => $rating, 'rated_at' => $rating === null ? null : now()]);
+            DB::transaction(function () use ($render, $rating) {
+                $render->update(['rating' => $rating, 'rated_at' => $rating === null ? null : now()]);
+                // Bản lưu bền theo outfit (outfit_ratings): xoá ảnh sau này thì điểm vẫn còn để học
+                if ($rating === null) {
+                    OutfitRating::query()->where('render_id', $render->id)->delete();
+                } else {
+                    OutfitRating::query()->updateOrCreate(['render_id' => $render->id], [
+                        'user_id' => $render->user_id, 'outfit_id' => $render->outfit_id, 'rating' => $rating,
+                        'a51_product_id' => $render->a51_product_id, 'a51_product_name' => $render->a51_product_name,
+                    ]);
+                }
+            });
             (new StylingEngine($request->user()))->learnFeedback();
         }
 

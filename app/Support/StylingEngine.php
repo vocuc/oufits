@@ -118,13 +118,14 @@ class StylingEngine
     }
 
     /**
-     * Điểm chủ shop chấm ảnh (outfit_renders.rating 1-10) -> cặp cấp fb (món:màu x món:màu trong outfit)
+     * Điểm chủ shop chấm ảnh (outfit_ratings.rating 1-10, lưu bền kể cả khi ảnh bị xoá) -> cặp cấp fb (món:màu x món:màu trong outfit)
      * và fb_shoe (món:màu x hashtag giày). Outfit có nhiều ảnh lấy điểm trung bình; điểm đổi về -1..+1
      * ((r - 5.5) / 4.5). score = tổng / (số outfit đã chấm + 1): một lần chấm 10 điểm -> +0.5, càng nhiều lần chấm càng chắc.
      */
     private function feedbackRows(): array
     {
-        $ratings = DB::table('outfit_renders')->where('user_id', $this->user->id)->whereNotNull('rating')
+        // outfit_ratings: bản lưu bền (ảnh bị xoá vẫn còn điểm)
+        $ratings = DB::table('outfit_ratings')->where('user_id', $this->user->id)
             ->groupBy('outfit_id')->selectRaw('outfit_id, AVG(rating) as avg_rating')->pluck('avg_rating', 'outfit_id');
         if ($ratings->isEmpty()) {
             return [];

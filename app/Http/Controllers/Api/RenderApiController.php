@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\OutfitRating;
 use App\Models\OutfitRender;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -48,5 +49,26 @@ class RenderApiController extends Controller
             ->distinct()->orderBy('outfit_id')->pluck('outfit_id');
 
         return response()->json(['data' => $ids]);
+    }
+
+    /** GET /api/outfit-ratings?min=&max= : điểm chủ shop đã chấm (lưu bền, kể cả ảnh đã xoá), mới nhất trước. */
+    public function ratings(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'min' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'max' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:500'],
+        ]);
+        $rows = OutfitRating::query()->where('user_id', $request->user()->id)
+            ->when(isset($data['min']), fn ($q) => $q->where('rating', '>=', $data['min']))
+            ->when(isset($data['max']), fn ($q) => $q->where('rating', '<=', $data['max']))
+            ->with('outfit:id,title,items')->latest('updated_at')->limit((int) ($data['limit'] ?? 200))->get()
+            ->map(fn (OutfitRating $r) => [
+                'outfit_id' => $r->outfit_id, 'title' => $r->outfit?->title, 'items' => $r->outfit?->items,
+                'rating' => $r->rating, 'render_id' => $r->render_id, 'a51_product_id' => $r->a51_product_id,
+                'rated_at' => $r->updated_at,
+            ]);
+
+        return response()->json(['data' => $rows]);
     }
 }

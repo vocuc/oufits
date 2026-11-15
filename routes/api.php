@@ -31,6 +31,7 @@ Route::middleware(EnsureApiToken::class)->group(function () {
 
     // Ảnh gốc lô phối đồ A51
     Route::post('renders', [RenderApiController::class, 'store']);
+    Route::get('outfit-ratings', [RenderApiController::class, 'ratings']);
     Route::get('renders/used-outfits', [RenderApiController::class, 'usedOutfits']);
 
     // Quy tắc chủ shop viết trên web (tạo outfit / ảnh bìa / đặt hook); API đọc / thêm / sửa (không xoá)

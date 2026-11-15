@@ -199,4 +199,26 @@ class StylingItemApiTest extends TestCase
         $this->actingAs($user)->get('/renders?rated=0')->assertOk()->assertSee('Chưa có ảnh nào.');
         $this->actingAs($user)->get('/renders?rated=1')->assertOk()->assertSee('7/10');
     }
+
+    /** Điểm lưu bền ở outfit_ratings: xoá ảnh vẫn giữ điểm, vẫn học được, API đọc được. */
+    public function test_rating_survives_render_deletion(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->issueApiToken();
+        $outfit = $this->outfit($user, ['giaysandal'], [$this->item('top', 'aolen', 'mauxam'), $this->item('bottom', 'quanjean', 'mauxanh')]);
+        $render = OutfitRender::query()->create(['user_id' => $user->id, 'outfit_id' => $outfit->id, 'image_path' => 'renders/a.png', 'a51_product_id' => 5]);
+        $this->actingAs($user)->put(route('renders.rate', $render), ['rating' => 9])->assertRedirect();
+        $this->put(route('renders.rate', $render), ['rating' => 8])->assertRedirect();
+        $this->assertSame(1, \App\Models\OutfitRating::query()->count());
+
+        $render->delete();
+        $rating = \App\Models\OutfitRating::query()->firstOrFail();
+        $this->assertSame(8, $rating->rating);
+        $this->assertNull($rating->render_id);
+
+        $this->withToken($token)->postJson('/api/styling/learn')->assertOk()->assertJsonPath('data.pairs.fb', 1);
+        $this->withToken($token)->getJson('/api/outfit-ratings?min=7')->assertOk()
+            ->assertJsonPath('data.0.outfit_id', $outfit->id)->assertJsonPath('data.0.rating', 8)->assertJsonPath('data.0.a51_product_id', 5);
+        $this->withToken($token)->getJson('/api/outfit-ratings?max=5')->assertOk()->assertJsonCount(0, 'data');
+    }
 }

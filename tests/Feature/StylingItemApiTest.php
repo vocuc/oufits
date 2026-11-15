@@ -99,6 +99,24 @@ class StylingItemApiTest extends TestCase
             ->assertOk()->assertJsonPath('data.0.score', $neg->score);
     }
 
+    public function test_learn_skips_outfits_claude_made(): void
+    {
+        $user = User::factory()->create();
+        $this->seedData($user);
+        for ($k = 0; $k < 5; $k++) {
+            $this->outfit($user, ['claudetao', 'henho'], [
+                $this->item('outer', 'cardigan', 'maudoruou'),
+                $this->item('bottom', 'quanlegging', 'mauden'),
+            ]);
+        }
+        $token = $user->issueApiToken();
+
+        $this->withToken($token)->postJson('/api/styling/learn')->assertOk()->assertJsonPath('data.outfits', 12);
+
+        $pair = ItemPair::query()->where(['level' => 'cat', 'a' => 'cardigan', 'b' => 'quanlegging'])->firstOrFail();
+        $this->assertSame(0, $pair->count);
+    }
+
     public function test_score_ranks_matching_set_above_mismatched_and_flags_structure(): void
     {
         $user = User::factory()->create();

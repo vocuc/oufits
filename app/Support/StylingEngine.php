@@ -37,6 +37,12 @@ class StylingEngine
     /** Trọng số điểm chấm khi chấm bộ món: gu của chính shop nặng hơn hẳn dữ liệu học từ TikTok (2026-11-15: 1.5 -> 2.5). */
     public const FEEDBACK_WEIGHT = 2.5;
 
+    /**
+     * Outfit Claude tự phối (lô phối đồ, luyện tập) mang hashtag này: KHÔNG học item_pairs từ chúng, tránh máy tự
+     * củng cố gu của chính nó (người dùng chốt 2026-11-15). Điểm chủ shop chấm ảnh của các outfit này vẫn học (feedbackRows).
+     */
+    public const SELF_MADE_TAG = 'claudetao';
+
     /** @var array<string, array{0: float, 1: int}>|null */
     private ?array $pairs = null;
 
@@ -44,10 +50,13 @@ class StylingEngine
 
     // ------------------------------------------------------------------ học
 
-    /** Tính lại toàn bộ item_pairs của tài khoản. Trả về số outfit đã dùng và số cặp theo cấp. */
+    /** Tính lại toàn bộ item_pairs của tài khoản (bỏ outfit SELF_MADE_TAG). Trả về số outfit đã dùng và số cặp theo cấp. */
     public function learn(): array
     {
-        $items = OutfitItem::query()->where('user_id', $this->user->id)->orderBy('outfit_id')->orderBy('position')->get();
+        $items = OutfitItem::query()->where('user_id', $this->user->id)
+            ->whereNotIn('outfit_id', DB::table('hashtag_outfit')->join('hashtags', 'hashtags.id', '=', 'hashtag_outfit.hashtag_id')
+                ->where('hashtags.name', self::SELF_MADE_TAG)->select('hashtag_outfit.outfit_id'))
+            ->orderBy('outfit_id')->orderBy('position')->get();
         $byOutfit = $items->groupBy('outfit_id');
         $tags = DB::table('hashtag_outfit')->join('hashtags', 'hashtags.id', '=', 'hashtag_outfit.hashtag_id')
             ->whereIn('hashtag_outfit.outfit_id', $byOutfit->keys())

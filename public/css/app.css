@@ -277,6 +277,10 @@ main { padding-top: 20px; padding-bottom: 48px; }
 /* Mẫu ảnh outfit (/outfit-layouts): ô chưa có ảnh + prompt layout */
 .ctpl__noimg { aspect-ratio: 3 / 4; display: grid; place-items: center; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); font-size: 13px; text-align: center; padding: 8px; }
 .ctpl__prompt summary { cursor: pointer; font-size: 13px; color: var(--accent); }
+.ctpl__edit { display: grid; gap: 10px; margin-top: 8px; }
+.ctpl__edit label { display: grid; gap: 4px; font-size: 13px; }
+.ctpl__edit textarea { width: 100%; box-sizing: border-box; font: 12px/1.5 ui-monospace, Consolas, monospace; }
+.ctpl__edit .btn { justify-self: start; }
 .ctpl__prompt pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; line-height: 1.5; background: var(--bg, #fafafa); border: 1px solid var(--line); border-radius: 8px; padding: 10px; max-height: 360px; overflow: auto; }
 
 /* Quy tắc: chế độ xem (chưa bấm Sửa) — ô chữ phẳng, nút Sửa chìm; chế độ sửa — ô chữ có viền, hiện Lưu + Huỷ */

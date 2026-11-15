@@ -67,9 +67,9 @@ class OutfitLayoutTest extends TestCase
 
         $this->actingAs($user)->get('/outfit-layouts')->assertOk()
             ->assertSee('Mẫu ảnh outfit')->assertSee('01 · Lookbook 2 cột')->assertSee('Chưa có ảnh mẫu')
-            ->assertSee('Xem prompt layout')->assertSee('Xem câu sửa nhanh')->assertDontSee('Dải tối mờ');
+            ->assertSee('Xem / sửa prompt layout')->assertSee('Lưu prompt')->assertDontSee('Dải tối mờ');
         $this->actingAs($user)->get('/cover-templates')->assertOk()->assertSee('Dải tối mờ')->assertDontSee('Lookbook 2 cột')
-            ->assertDontSee('Xem prompt layout');
+            ->assertDontSee('Xem / sửa prompt layout');
 
         $this->actingAs($user)->put("/outfit-layouts/{$layout->id}", ['request' => 'Nền sáng hơn', 'status' => 'approved'])
             ->assertRedirect();
@@ -82,6 +82,21 @@ class OutfitLayoutTest extends TestCase
         $other = User::factory()->create();
         $this->actingAs($other)->put("/outfit-layouts/{$layout->id}", ['request' => 'hack'])->assertNotFound();
         $this->actingAs($other)->get("/outfit-layouts/{$layout->id}/image")->assertNotFound();
+    }
+
+    public function test_edit_prompt_keeps_status_owner_only(): void
+    {
+        $user = User::factory()->create();
+        $layout = $user->outfitLayouts()->create(['code' => '08', 'name' => 'Sửa prompt', 'prompt' => 'cũ', 'status' => 'approved']);
+
+        $this->actingAs($user)->put("/outfit-layouts/{$layout->id}/prompt", ['prompt' => "Dáng mới\r\nđứng nghiêng", 'fix_prompt' => ''])
+            ->assertRedirect();
+        $layout->refresh();
+        $this->assertSame(["Dáng mới\nđứng nghiêng", null, 'approved'], [$layout->prompt, $layout->fix_prompt, $layout->status]);
+
+        $this->actingAs($user)->put("/outfit-layouts/{$layout->id}/prompt", ['prompt' => ''])->assertSessionHasErrors('prompt');
+        $this->actingAs(User::factory()->create())->put("/outfit-layouts/{$layout->id}/prompt", ['prompt' => 'hack'])->assertNotFound();
+        $this->assertSame("Dáng mới\nđứng nghiêng", $layout->fresh()->prompt);
     }
 
     public function test_delete_layout_owner_only(): void

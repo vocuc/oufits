@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('outfit-layouts', [OutfitLayoutController::class, 'index'])->name('outfit-layouts.index');
     Route::put('outfit-layouts/{template}', [OutfitLayoutController::class, 'update'])->name('outfit-layouts.update');
+    Route::put('outfit-layouts/{template}/prompt', [OutfitLayoutController::class, 'updatePrompt'])->name('outfit-layouts.prompt');
     Route::delete('outfit-layouts/{template}', [OutfitLayoutController::class, 'destroy'])->name('outfit-layouts.destroy');
     Route::get('outfit-layouts/{template}/image', [OutfitLayoutController::class, 'image'])->name('outfit-layouts.image');
 

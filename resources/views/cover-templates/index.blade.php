@@ -52,12 +52,16 @@
                         <div class="ctpl__text">{{ $t->how_to }}</div>
                         @if ($page['show_prompt'])
                             <details class="ctpl__prompt">
-                                <summary>Xem prompt layout</summary>
-                                <pre>{{ $t->prompt ?: 'Chưa có prompt — layout này chưa dùng được dù đã duyệt.' }}</pre>
-                            </details>
-                            <details class="ctpl__prompt">
-                                <summary>Xem câu sửa nhanh</summary>
-                                <pre>{{ $t->fix_prompt ?: 'Chưa có câu riêng — dùng câu sửa nhanh chung (mặc định).' }}</pre>
+                                <summary>Xem / sửa prompt layout</summary>
+                                <form method="post" action="{{ route($route.'.prompt', ['template' => $t->id]) }}" class="ctpl__edit">
+                                    @csrf
+                                    @method('PUT')
+                                    <label>Prompt layout <small class="muted">(khung ảnh, người mẫu, dáng, bối cảnh, chữ; có <code>{HOOK}</code> thì ảnh có câu hook)</small>
+                                        <textarea name="prompt" rows="18" required>{{ old('prompt', $t->prompt) }}</textarea></label>
+                                    <label>Câu sửa nhanh <small class="muted">(để trống = dùng câu sửa nhanh chung)</small>
+                                        <textarea name="fix_prompt" rows="8">{{ old('fix_prompt', $t->fix_prompt) }}</textarea></label>
+                                    <button class="btn btn--primary">Lưu prompt</button>
+                                </form>
                             </details>
                         @endif
                     </div>

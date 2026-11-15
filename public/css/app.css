@@ -295,3 +295,15 @@ main { padding-top: 20px; padding-bottom: 48px; }
 .gl__row.is-off textarea, .gl__row.is-off textarea[readonly] { color: var(--muted); }
 .gl__row textarea::placeholder, .ctpl__req textarea::placeholder { color: var(--muted); }
 .gl__row textarea:focus, .ctpl__req textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* Chấm điểm ảnh (Thư viện ảnh) */
+.rate { display: grid; gap: 6px; margin: 0; margin-top: auto; }
+.card .rate__head { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.rate__head strong { color: var(--accent); }
+.rate__scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.rate__btn {
+    height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+    color: var(--text); font: 600 12px/1 "Be Vietnam Pro", system-ui, sans-serif; cursor: pointer;
+}
+.rate__btn:hover { border-color: var(--accent); }
+.rate__btn.is-on { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }

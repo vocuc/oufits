@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\ItemPair;
 use App\Models\Outfit;
+use App\Models\OutfitRender;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -138,5 +139,64 @@ class StylingItemApiTest extends TestCase
             $slots = collect($s['items'])->pluck('slot');
             $this->assertTrue($slots->contains('dress') || ($slots->contains('top') && $slots->contains('bottom')));
         }
+    }
+
+    /** Điểm chủ shop chấm ảnh trên Thư viện ảnh -> cấp fb / fb_shoe, kéo điểm bộ món giống outfit đó lên / xuống. */
+    public function test_shop_ratings_are_learned_into_score(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->issueApiToken();
+        $this->seedData($user);
+        $liked = [$this->item('top', 'aolen', 'mauxam'), $this->item('bottom', 'quanjean', 'mauxanh')];
+        $disliked = [$this->item('top', 'aocroptop', 'maudo'), $this->item('bottom', 'chanvaymini', 'mauvang')];
+        $a = $this->outfit($user, ['giaysandal'], $liked);
+        $b = $this->outfit($user, ['giaysandal'], $disliked);
+        $this->withToken($token)->postJson('/api/styling/learn')->assertOk();
+        $score = fn (array $items) => $this->withToken($token)
+            ->postJson('/api/styling/score', ['items' => $items, 'shoe' => 'giaysandal'])->assertOk()->json('data.score');
+        [$likedBefore, $dislikedBefore] = [$score($liked), $score($disliked)];
+
+        $renderA = OutfitRender::query()->create(['user_id' => $user->id, 'outfit_id' => $a->id, 'image_path' => 'renders/a.png']);
+        $renderB = OutfitRender::query()->create(['user_id' => $user->id, 'outfit_id' => $b->id, 'image_path' => 'renders/b.png']);
+        $this->actingAs($user)->put(route('renders.rate', $renderA), ['rating' => 10])->assertRedirect();
+        $this->put(route('renders.rate', $renderB), ['rating' => 1])->assertRedirect();
+        $this->assertSame(10, $renderA->fresh()->rating);
+        $this->assertNotNull($renderA->fresh()->rated_at);
+
+        // Học ngay sau khi chấm (không cần gọi learn)
+        $fb = ItemPair::query()->where('level', 'fb')->where('a', 'aolen:mauxam')->where('b', 'quanjean:mauxanh')->firstOrFail();
+        $this->assertSame(0.5, $fb->score);
+        $this->assertTrue(ItemPair::query()->where('level', 'fb_shoe')->where('a', 'chanvaymini:mauvang')->where('b', 'giaysandal')->where('score', '<', 0)->exists());
+        $this->assertGreaterThan($likedBefore, $score($liked));
+        $this->assertLessThan($dislikedBefore, $score($disliked));
+
+        // learn() tính lại toàn bộ vẫn giữ phần điểm chấm
+        $this->withToken($token)->postJson('/api/styling/learn')->assertOk()->assertJsonPath('data.pairs.fb', 2);
+
+        // Bỏ điểm -> hết ảnh hưởng
+        $this->actingAs($user)->put(route('renders.rate', $renderA), ['rating' => ''])->assertRedirect();
+        $this->put(route('renders.rate', $renderB), ['rating' => ''])->assertRedirect();
+        $this->assertNull($renderA->fresh()->rating);
+        $this->assertSame(0, ItemPair::query()->whereIn('level', ['fb', 'fb_shoe'])->count());
+        $this->assertSame($likedBefore, $score($liked));
+    }
+
+    public function test_rating_validation_and_owner_only(): void
+    {
+        $user = User::factory()->create();
+        $outfit = $user->outfits()->create(['title' => 'A', 'items' => '- a']);
+        $render = OutfitRender::query()->create(['user_id' => $user->id, 'outfit_id' => $outfit->id, 'image_path' => 'renders/a.png']);
+
+        foreach ([0, 11, 'abc'] as $bad) {
+            $this->actingAs($user)->putJson(route('renders.rate', $render), ['rating' => $bad])->assertUnprocessable();
+        }
+        $this->actingAs($user)->putJson(route('renders.rate', $render), ['rating' => 7])->assertOk()->assertJsonPath('data.rating', 7);
+        $this->actingAs(User::factory()->create())->putJson(route('renders.rate', $render), ['rating' => 1])->assertNotFound();
+        $this->assertSame(7, $render->fresh()->rating);
+
+        // Trang Thư viện ảnh: hiện điểm + lọc chưa chấm / đã chấm
+        $this->actingAs($user)->get('/renders')->assertOk()->assertSee('7/10');
+        $this->actingAs($user)->get('/renders?rated=0')->assertOk()->assertSee('Chưa có ảnh nào.');
+        $this->actingAs($user)->get('/renders?rated=1')->assertOk()->assertSee('7/10');
     }
 }

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 /** Độ hợp của một cặp (a, b) ở một cấp so sánh; score -1..+1 (dương = đi cùng nhiều hơn ngẫu nhiên). */
 class ItemPair extends Model
 {
-    public const LEVELS = ['cat', 'cat_color', 'color', 'material', 'pattern', 'style_full', 'cat_shoe', 'color_shoe', 'cat_ctx'];
+    public const LEVELS = ['cat', 'cat_color', 'color', 'material', 'pattern', 'style_full', 'cat_shoe', 'color_shoe', 'cat_ctx', 'fb', 'fb_shoe'];
 
     protected $guarded = ['id'];
 

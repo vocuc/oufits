@@ -15,6 +15,12 @@ class OutfitRender extends Model
 
     protected $hidden = ['user_id', 'image_path', 'thumb_path'];
 
+    protected function casts(): array
+    {
+        // rating: chủ shop chấm 1-10 (null = chưa chấm), học ở StylingEngine::feedbackRows()
+        return ['rating' => 'integer', 'rated_at' => 'datetime'];
+    }
+
     public function outfit(): BelongsTo
     {
         return $this->belongsTo(Outfit::class);

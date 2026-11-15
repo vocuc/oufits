@@ -31,6 +31,12 @@ class StylingEngine
 
     private const NEG_LEVELS = ['cat', 'color', 'material', 'pattern', 'cat_shoe'];
 
+    /** Cấp học từ điểm chủ shop chấm ảnh (Thư viện ảnh), xem feedbackRows(). */
+    public const FEEDBACK_LEVELS = ['fb', 'fb_shoe'];
+
+    /** Trọng số điểm chấm khi chấm bộ món: gu của chính shop nặng hơn dữ liệu học từ TikTok. */
+    public const FEEDBACK_WEIGHT = 1.5;
+
     /** @var array<string, array{0: float, 1: int}>|null */
     private ?array $pairs = null;
 
@@ -78,9 +84,28 @@ class StylingEngine
         foreach ($cross as $level => $perOutfit) {
             $rows = [...$rows, ...$this->pairsAcross($level, $perOutfit, $n)];
         }
+        $rows = [...$rows, ...$this->feedbackRows()];
 
-        DB::transaction(function () use ($rows) {
-            ItemPair::query()->where('user_id', $this->user->id)->delete();
+        $this->replacePairs($rows);
+
+        return ['outfits' => $n, 'items' => $items->count(), 'pairs' => collect($rows)->countBy('level')->all()];
+    }
+
+    /** Chỉ học lại phần điểm chủ shop chấm (fb / fb_shoe), nhanh: chạy ngay sau mỗi lần chấm ảnh. */
+    public function learnFeedback(): array
+    {
+        $rows = $this->feedbackRows();
+        $this->replacePairs($rows, self::FEEDBACK_LEVELS);
+
+        return ['pairs' => collect($rows)->countBy('level')->all()];
+    }
+
+    /** Xoá item_pairs của tài khoản (mọi cấp, hoặc chỉ $levels) rồi ghi $rows. */
+    private function replacePairs(array $rows, ?array $levels = null): void
+    {
+        DB::transaction(function () use ($rows, $levels) {
+            ItemPair::query()->where('user_id', $this->user->id)
+                ->when($levels !== null, fn ($q) => $q->whereIn('level', $levels))->delete();
             $now = now();
             foreach (array_chunk($rows, 500) as $chunk) {
                 ItemPair::query()->insert(array_map(fn ($r) => [
@@ -90,8 +115,66 @@ class StylingEngine
             }
         });
         $this->pairs = null;
+    }
 
-        return ['outfits' => $n, 'items' => $items->count(), 'pairs' => collect($rows)->countBy('level')->all()];
+    /**
+     * Điểm chủ shop chấm ảnh (outfit_renders.rating 1-10) -> cặp cấp fb (món:màu x món:màu trong outfit)
+     * và fb_shoe (món:màu x hashtag giày). Outfit có nhiều ảnh lấy điểm trung bình; điểm đổi về -1..+1
+     * ((r - 5.5) / 4.5). score = tổng / (số outfit đã chấm + 1): một lần chấm 10 điểm -> +0.5, càng nhiều lần chấm càng chắc.
+     */
+    private function feedbackRows(): array
+    {
+        $ratings = DB::table('outfit_renders')->where('user_id', $this->user->id)->whereNotNull('rating')
+            ->groupBy('outfit_id')->selectRaw('outfit_id, AVG(rating) as avg_rating')->pluck('avg_rating', 'outfit_id');
+        if ($ratings->isEmpty()) {
+            return [];
+        }
+        $items = OutfitItem::query()->where('user_id', $this->user->id)->whereIn('outfit_id', $ratings->keys())->get()->groupBy('outfit_id');
+        $shoeTags = DB::table('hashtag_outfit')->join('hashtags', 'hashtags.id', '=', 'hashtag_outfit.hashtag_id')
+            ->whereIn('hashtag_outfit.outfit_id', $ratings->keys())
+            ->where(fn ($q) => $q->where('hashtags.name', 'like', 'giay%')->orWhere('hashtags.name', 'like', 'boot%'))
+            ->get(['hashtag_outfit.outfit_id', 'hashtags.name'])->groupBy('outfit_id')->map(fn ($r) => $r->pluck('name')->all());
+
+        $acc = []; // level \x1F a \x1F b => [tổng, số outfit, examples]
+        $add = function (string $level, string $a, string $b, float $c, int $outfitId) use (&$acc) {
+            $key = $level."\x1F".$a."\x1F".$b;
+            $acc[$key] ??= [0.0, 0, []];
+            $acc[$key][0] += $c;
+            $acc[$key][1]++;
+            if (count($acc[$key][2]) < 10) {
+                $acc[$key][2][] = $outfitId;
+            }
+        };
+        foreach ($ratings as $outfitId => $avg) {
+            $c = ((float) $avg - 5.5) / 4.5;
+            $keys = collect($items[$outfitId] ?? [])->map(fn (OutfitItem $i) => self::fbKey($i->toArray()))->filter()->unique()->sort()->values()->all();
+            $m = count($keys);
+            for ($i = 0; $i < $m; $i++) {
+                for ($j = $i + 1; $j < $m; $j++) {
+                    $add('fb', $keys[$i], $keys[$j], $c, (int) $outfitId);
+                }
+                foreach ($shoeTags[$outfitId] ?? [] as $shoe) {
+                    $add('fb_shoe', $keys[$i], $shoe, $c, (int) $outfitId);
+                }
+            }
+        }
+
+        $rows = [];
+        foreach ($acc as $key => [$sum, $count, $examples]) {
+            [$level, $a, $b] = explode("\x1F", $key);
+            $rows[] = ['level' => $level, 'a' => $a, 'b' => $b, 'count' => $count, 'expected' => 0, 'lift' => 0,
+                'score' => round($sum / ($count + 1), 3), 'examples' => $examples];
+        }
+
+        return $rows;
+    }
+
+    /** Khoá của 1 món ở cấp fb / fb_shoe: loại:màu (không có màu thì chỉ loại). */
+    private static function fbKey(array $item): ?string
+    {
+        $cat = $item['category'] ?? null;
+
+        return $cat ? (empty($item['color']) ? $cat : "{$cat}:{$item['color']}") : null;
     }
 
     /** Các token của 1 món theo từng cấp. */
@@ -227,7 +310,7 @@ class StylingEngine
     private function lookup(string $level, string $a, string $b): ?array
     {
         $map = $this->pairMap();
-        if (in_array($level, ['cat_shoe', 'color_shoe', 'cat_ctx'], true)) {
+        if (in_array($level, ['cat_shoe', 'color_shoe', 'cat_ctx', 'fb_shoe'], true)) {
             return $map[$level."\x1F".$a."\x1F".$b] ?? null;
         }
         [$x, $y] = strcmp($a, $b) <= 0 ? [$a, $b] : [$b, $a];
@@ -254,7 +337,8 @@ class StylingEngine
             }
             if ($shoe) {
                 $parts = [];
-                foreach ([['cat_shoe', $items[$i]['category'] ?? null, 1.0], ['color_shoe', $items[$i]['color'] ?? null, 0.5]] as [$lv, $a, $w]) {
+                foreach ([['cat_shoe', $items[$i]['category'] ?? null, 1.0], ['color_shoe', $items[$i]['color'] ?? null, 0.5],
+                    ['fb_shoe', self::fbKey($items[$i]), self::FEEDBACK_WEIGHT]] as [$lv, $a, $w]) {
                     if ($a && ($hit = $this->lookup($lv, $a, $shoe))) {
                         $parts[] = [$hit[0], $w, $lv, $hit[1]];
                     }
@@ -311,6 +395,10 @@ class StylingEngine
             if ($scores) {
                 $parts[] = [array_sum(array_column($scores, 0)) / count($scores), $w, $lv, max(array_column($scores, 1))];
             }
+        }
+        // điểm chủ shop chấm cho các outfit có cặp món:màu này
+        if (($kx = self::fbKey($x)) && ($ky = self::fbKey($y)) && $kx !== $ky && ($hit = $this->lookup('fb', $kx, $ky))) {
+            $parts[] = [$hit[0], self::FEEDBACK_WEIGHT, 'fb', $hit[1]];
         }
         if (! $parts) {
             return [0.0, 0.3, ['level' => 'unknown', 'count' => 0]];
@@ -448,6 +536,9 @@ class StylingEngine
         }
         if ($shoe && ! empty($item['color']) && ($hit = $this->lookup('color_shoe', $item['color'], $shoe))) {
             $s += 0.5 * $hit[0];
+        }
+        if ($shoe && ($key = self::fbKey($item)) && ($hit = $this->lookup('fb_shoe', $key, $shoe))) {
+            $s += self::FEEDBACK_WEIGHT * $hit[0];
         }
         foreach ($context as $tag) {
             if ($hit = $this->lookup('cat_ctx', $item['category'], $tag)) {

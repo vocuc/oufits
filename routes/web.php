@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('renders', [RenderController::class, 'index'])->name('renders.index');
     Route::get('renders/{render}/image', [RenderController::class, 'image'])->name('renders.image');
+    Route::put('renders/{render}/rating', [RenderController::class, 'rate'])->name('renders.rate');
 
     Route::get('cover-templates', [CoverTemplateController::class, 'index'])->name('cover-templates.index');
     Route::put('cover-templates/{template}', [CoverTemplateController::class, 'update'])->name('cover-templates.update');

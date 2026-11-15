@@ -221,4 +221,29 @@ class StylingItemApiTest extends TestCase
             ->assertJsonPath('data.0.outfit_id', $outfit->id)->assertJsonPath('data.0.rating', 8)->assertJsonPath('data.0.a51_product_id', 5);
         $this->withToken($token)->getJson('/api/outfit-ratings?max=5')->assertOk()->assertJsonCount(0, 'data');
     }
+
+    /** Gu theo kiểu món (fb_cat / fb_attr): chấm cao đầm satin đỏ -> đầm satin MÀU KHÁC cũng được cộng điểm, kiểu bị chấm thấp bị trừ. */
+    public function test_rating_generalizes_by_style_not_color(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->issueApiToken();
+        $this->seedData($user);
+        $liked = $this->outfit($user, ['giaycaogot'], [$this->item('dress', 'damsatin', 'maudo', ['material' => 'satin', 'length' => 'bapchan']), $this->item('bag', 'tuixach', 'mauden')]);
+        $disliked = $this->outfit($user, ['giaycaogot'], [$this->item('dress', 'damlanh', 'mautrang', ['material' => 'lanh', 'length' => 'quagoi']), $this->item('bag', 'tuicoi', 'maube')]);
+        $this->withToken($token)->postJson('/api/styling/learn')->assertOk();
+        $score = fn (array $items) => $this->withToken($token)
+            ->postJson('/api/styling/score', ['items' => $items, 'shoe' => 'giaycaogot'])->assertOk()->json('data.score');
+        $satinBlack = [$this->item('dress', 'damsatin', 'mauden', ['material' => 'satin', 'length' => 'bapchan']), $this->item('bag', 'tuixach', 'maubac')];
+        $linenBlue = [$this->item('dress', 'damlanh', 'mauxanh', ['material' => 'lanh', 'length' => 'quagoi']), $this->item('bag', 'tuicoi', 'maunau')];
+        [$a0, $b0] = [$score($satinBlack), $score($linenBlue)];
+
+        foreach ([[$liked, 9], [$disliked, 2]] as [$outfit, $rating]) {
+            $render = OutfitRender::query()->create(['user_id' => $user->id, 'outfit_id' => $outfit->id, 'image_path' => 'renders/x.png']);
+            $this->actingAs($user)->put(route('renders.rate', $render), ['rating' => $rating])->assertRedirect();
+        }
+        $this->assertTrue(ItemPair::query()->where('level', 'fb_attr')->where('a', 'mat:satin')->where('b', '*')->where('score', '>', 0)->exists());
+        $this->assertTrue(ItemPair::query()->where('level', 'fb_cat')->where('a', 'damlanh')->where('b', 'tuicoi')->where('score', '<', 0)->exists());
+        $this->assertGreaterThan($a0 + 3, $score($satinBlack));
+        $this->assertLessThan($b0 - 3, $score($linenBlue));
+    }
 }

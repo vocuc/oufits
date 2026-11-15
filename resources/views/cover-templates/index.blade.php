@@ -76,6 +76,9 @@
                             @if ($t->status !== \App\Models\CoverTemplate::PENDING)
                                 <button class="btn" name="status" value="pending">Về chờ duyệt</button>
                             @endif
+                            @if (Route::has($route.'.destroy'))
+                                <button class="btn btn--danger" form="xoa-{{ $t->id }}" title="Xoá hẳn mẫu này">Xoá</button>
+                            @endif
                         </div>
                         @if ($t->request_updated_at || $t->reviewed_at)
                             <small class="muted">
@@ -84,6 +87,13 @@
                             </small>
                         @endif
                     </form>
+                    @if (Route::has($route.'.destroy'))
+                        <form method="post" action="{{ route($route.'.destroy', ['template' => $t->id]) }}" id="xoa-{{ $t->id }}"
+                              onsubmit="return confirm('Xoá hẳn mẫu {{ $t->code }} · {{ addslashes($t->name) }}? Không khôi phục được.')" hidden>
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                    @endif
                 </article>
             @endforeach
         </div>

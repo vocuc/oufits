@@ -83,4 +83,25 @@ class OutfitLayoutTest extends TestCase
         $this->actingAs($other)->put("/outfit-layouts/{$layout->id}", ['request' => 'hack'])->assertNotFound();
         $this->actingAs($other)->get("/outfit-layouts/{$layout->id}/image")->assertNotFound();
     }
+
+    public function test_delete_layout_owner_only(): void
+    {
+        $user = User::factory()->create();
+        $layout = $user->outfitLayouts()->create(['code' => '07', 'name' => 'Thử xoá']);
+        $cover = $user->coverTemplates()->create(['code' => '07', 'name' => 'Bìa giữ lại']);
+        $layout->replaceImage(UploadedFile::fake()->image('mau.jpg', 600, 800));
+        $path = $layout->fresh()->image_path;
+
+        $this->actingAs($user)->get('/outfit-layouts')->assertSee('Xoá hẳn mẫu này');
+        $this->actingAs($user)->get('/cover-templates')->assertDontSee('Xoá hẳn mẫu này');
+
+        $other = User::factory()->create();
+        $this->actingAs($other)->delete("/outfit-layouts/{$layout->id}")->assertNotFound();
+        $this->assertNotNull($layout->fresh());
+
+        $this->actingAs($user)->delete("/outfit-layouts/{$layout->id}")->assertRedirect('/outfit-layouts');
+        $this->assertNull($layout->fresh());
+        Storage::disk('local')->assertMissing($path);
+        $this->assertNotNull($cover->fresh());
+    }
 }

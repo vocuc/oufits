@@ -62,6 +62,16 @@ class CoverTemplateController extends Controller
             ->with('status', "Đã lưu mẫu {$t->code} ({$t->statusLabel()}).");
     }
 
+    /** Xoá hẳn một mẫu (kèm ảnh mẫu). Chỉ trang có route .destroy (hiện là Mẫu ảnh outfit) mới hiện nút xoá. */
+    public function destroy(Request $request, string $template)
+    {
+        $t = $this->find($request, $template);
+        $label = "{$t->code} · {$t->name}";
+        $t->delete();
+
+        return redirect()->route(($this->model)::ROUTE.'.index')->with('status', "Đã xoá mẫu {$label}.");
+    }
+
     public function image(Request $request, string $template)
     {
         $t = $this->find($request, $template);

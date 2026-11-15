@@ -93,7 +93,7 @@ class OutfitLayoutTest extends TestCase
         $path = $layout->fresh()->image_path;
 
         $this->actingAs($user)->get('/outfit-layouts')->assertSee('Xoá hẳn mẫu này');
-        $this->actingAs($user)->get('/cover-templates')->assertDontSee('Xoá hẳn mẫu này');
+        $this->actingAs($user)->get('/cover-templates')->assertSee('Xoá hẳn mẫu này');
 
         $other = User::factory()->create();
         $this->actingAs($other)->delete("/outfit-layouts/{$layout->id}")->assertNotFound();
@@ -103,5 +103,10 @@ class OutfitLayoutTest extends TestCase
         $this->assertNull($layout->fresh());
         Storage::disk('local')->assertMissing($path);
         $this->assertNotNull($cover->fresh());
+
+        // Mẫu ảnh bìa cũng xoá được, chỉ chủ của mẫu
+        $this->actingAs($other)->delete("/cover-templates/{$cover->id}")->assertNotFound();
+        $this->actingAs($user)->delete("/cover-templates/{$cover->id}")->assertRedirect('/cover-templates');
+        $this->assertNull($cover->fresh());
     }
 }

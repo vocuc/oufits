@@ -30,6 +30,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('cover-templates', [CoverTemplateController::class, 'index'])->name('cover-templates.index');
     Route::put('cover-templates/{template}', [CoverTemplateController::class, 'update'])->name('cover-templates.update');
+    Route::delete('cover-templates/{template}', [CoverTemplateController::class, 'destroy'])->name('cover-templates.destroy');
     Route::get('cover-templates/{template}/image', [CoverTemplateController::class, 'image'])->name('cover-templates.image');
 
     Route::get('outfit-layouts', [OutfitLayoutController::class, 'index'])->name('outfit-layouts.index');

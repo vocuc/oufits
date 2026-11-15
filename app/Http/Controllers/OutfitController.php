@@ -32,7 +32,7 @@ class OutfitController extends Controller
         $limit = $offset === 0 ? self::FIRST_PAGE : self::MORE_PAGE;
         $query = $user->outfits()->withAllHashtags($selected);
         $total = (clone $query)->count();
-        $outfits = $query->with('hashtags')->withCount('renders')
+        $outfits = $query->with(['hashtags', 'latestRender'])->withCount('renders')
             ->orderByDesc('created_at')->orderByDesc('id')
             ->skip($offset)->take($limit)
             ->get();

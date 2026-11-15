@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
@@ -55,6 +56,12 @@ class Outfit extends Model
     public function renders(): HasMany
     {
         return $this->hasMany(OutfitRender::class);
+    }
+
+    /** Ảnh tạo gần nhất của outfit: trang danh sách outfit dùng làm ảnh bìa (2026-11-15). */
+    public function latestRender(): HasOne
+    {
+        return $this->hasOne(OutfitRender::class)->latestOfMany();
     }
 
     /** Các món đã tách từ items (cột "items" là văn bản nên quan hệ đặt tên itemsList). */

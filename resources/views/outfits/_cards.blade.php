@@ -12,7 +12,10 @@
 @foreach ($outfits as $outfit)
     <article class="card">
         <a href="{{ route('outfits.show', $outfit) }}" class="card__cover" tabindex="-1">
-            @if ($outfit->cover_path)
+            {{-- Ảnh bìa = ảnh tạo gần nhất (Thư viện ảnh); chưa có ảnh tạo thì dùng ảnh bìa tải lên --}}
+            @if ($outfit->latestRender)
+                <img src="{{ $outfit->latestRender->url(true) }}" alt="{{ $outfit->title }}" loading="lazy">
+            @elseif ($outfit->cover_path)
                 <img src="{{ $outfit->coverUrl() }}" alt="{{ $outfit->title }}" loading="lazy">
             @else
                 <span class="card__nocover">Chưa có ảnh bìa</span>
@@ -31,9 +34,7 @@
             @endforeach
         </div>
 
-        <textarea id="p-{{ $outfit->id }}" class="sr-only" readonly tabindex="-1">{{ \App\Support\PromptComposer::outfitBlock($outfit) }}</textarea>
         <div class="card__actions">
-            <button type="button" class="btn btn--primary" data-copy="p-{{ $outfit->id }}">Copy outfit</button>
             <a href="{{ route('outfits.show', $outfit) }}" class="btn">Chi tiết</a>
             @if (($outfit->renders_count ?? 0) > 0)
                 <a href="{{ route('renders.index', ['outfit' => $outfit->id]) }}" class="btn">Ảnh ({{ $outfit->renders_count }})</a>

@@ -63,6 +63,13 @@ class RenderTest extends TestCase
         $this->actingAs($user)->get('/renders?outfit='.$a->id)->assertOk()->assertSee('Outfit Alpha')->assertDontSee('Outfit Beta');
         $this->actingAs($user)->get(route('outfits.show', $a))->assertOk()->assertSee('Ảnh đã tạo (1)');
 
+        // Trang danh sách outfit: ảnh bìa = ảnh tạo gần nhất của outfit
+        $this->withToken($token)->post('/api/renders', ['image' => UploadedFile::fake()->image('r2.jpg'), 'outfit_id' => $a->id],
+            ['Accept' => 'application/json'])->assertCreated();
+        $latest = OutfitRender::query()->where('outfit_id', $a->id)->latest('id')->firstOrFail();
+        $this->actingAs($user)->get('/')->assertOk()->assertSee($latest->url(true), false)
+            ->assertDontSee(OutfitRender::query()->where('outfit_id', $a->id)->oldest('id')->firstOrFail()->url(true), false);
+
         $render = OutfitRender::query()->firstOrFail();
         $this->assertContains($this->actingAs($user)->get(route('renders.image', $render))->status(), [200, 302]);
         $this->actingAs(User::factory()->create())->get(route('renders.image', $render))->assertNotFound();

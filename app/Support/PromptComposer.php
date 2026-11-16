@@ -26,8 +26,11 @@ class PromptComposer
             return 'Tạo MỘT ảnh cho outfit trong phần OUTFIT bên dưới, làm đúng theo các yêu cầu sau.';
         }
 
-        return "Tạo {$count} ảnh RIÊNG BIỆT, mỗi outfit trong DANH SÁCH OUTFIT bên dưới là một ảnh, theo đúng thứ tự (ảnh 1 = outfit 1, ...). "
-            .'Tất cả các ảnh dùng CÙNG một người mẫu và cùng đôi giày trong ảnh tôi tải lên; mỗi ảnh làm đúng theo các yêu cầu sau.';
+        // MỘT ảnh duy nhất chứa đủ N outfit (layout chia khung/cột). Câu cũ "Tạo N ảnh RIÊNG BIỆT" mâu thuẫn với
+        // layout nhiều outfit -> ChatGPT chỉ vẽ 1 outfit hoặc lặp outfit 1 ở mọi cột (lô 896, 2026-11-16).
+        return "Tạo MỘT ảnh DUY NHẤT gồm đủ {$count} outfit trong DANH SÁCH OUTFIT bên dưới, mỗi outfit một khung theo bố cục bên dưới, "
+            ."đúng thứ tự (khung 1 = OUTFIT 1, khung 2 = OUTFIT 2, ...). {$count} khung là {$count} bộ KHÁC NHAU rõ ràng, "
+            .'KHÔNG lặp lại một outfit ở nhiều khung, không lẫn món của nhau; cùng một người mẫu ở mọi khung. Làm đúng theo các yêu cầu sau.';
     }
 
     /** Một outfit dạng khối văn bản: tên, phong cách, item. */

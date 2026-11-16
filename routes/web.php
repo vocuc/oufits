@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CoverTemplateController;
+use App\Http\Controllers\FashionModelController;
 use App\Http\Controllers\GuidelineController;
 use App\Http\Controllers\OutfitLayoutController;
 use App\Http\Controllers\OutfitController;
@@ -38,6 +39,16 @@ Route::middleware('auth')->group(function () {
     Route::put('outfit-layouts/{template}/prompt', [OutfitLayoutController::class, 'updatePrompt'])->name('outfit-layouts.prompt');
     Route::delete('outfit-layouts/{template}', [OutfitLayoutController::class, 'destroy'])->name('outfit-layouts.destroy');
     Route::get('outfit-layouts/{template}/image', [OutfitLayoutController::class, 'image'])->name('outfit-layouts.image');
+
+    Route::get('models', [FashionModelController::class, 'index'])->name('models.index');
+    Route::post('models', [FashionModelController::class, 'store'])->name('models.store');
+    Route::put('models/{model}', [FashionModelController::class, 'update'])->name('models.update')->whereNumber('model');
+    Route::delete('models/{model}', [FashionModelController::class, 'destroy'])->name('models.destroy')->whereNumber('model');
+    Route::put('models/{model}/prompt', [FashionModelController::class, 'updatePrompt'])->name('models.prompt')->whereNumber('model');
+    Route::post('models/{model}/default', [FashionModelController::class, 'makeDefault'])->name('models.default')->whereNumber('model');
+    Route::post('models/{model}/photos', [FashionModelController::class, 'addPhotos'])->name('models.photos.store')->whereNumber('model');
+    Route::get('models/{model}/photos/{photo}', [FashionModelController::class, 'photo'])->name('models.photo')->whereNumber(['model', 'photo']);
+    Route::delete('models/{model}/photos/{photo}', [FashionModelController::class, 'destroyPhoto'])->name('models.photos.destroy')->whereNumber(['model', 'photo']);
 
     Route::get('guidelines', [GuidelineController::class, 'index'])->name('guidelines.index');
     Route::post('guidelines', [GuidelineController::class, 'store'])->name('guidelines.store');

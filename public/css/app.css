@@ -311,3 +311,24 @@ main { padding-top: 20px; padding-bottom: 48px; }
 }
 .rate__btn:hover { border-color: var(--accent); }
 .rate__btn.is-on { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+
+/* Người mẫu (/models) */
+.mdl__new { margin: 16px 0; }
+.mdl__new > summary { list-style: none; cursor: pointer; display: inline-flex; }
+.mdl__new > summary::-webkit-details-marker { display: none; }
+.mdl__new .form { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.mdl { display: grid; gap: 14px; margin: 16px 0; }
+.mdl__row { display: grid; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; scroll-margin-top: 80px; }
+.mdl__status--need { background: #fff1d6; color: #9a5b00; }
+.mdl__photos { display: flex; flex-wrap: wrap; gap: 10px; }
+.mdl__photo { position: relative; margin: 0; width: 120px; }
+.mdl__photo img { width: 120px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; display: block; }
+.mdl__del { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 999px; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }
+.mdl__add { margin: 0; }
+.mdl__pick { cursor: pointer; color: var(--accent); font-weight: 600; }
+.mdl__notes { display: grid; gap: 8px; }
+.mdl__notes label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; }
+.mdl__notes input, .mdl__notes textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; font-weight: 400; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; resize: vertical; background: var(--surface); color: var(--text); }
+@media (max-width: 520px) {
+    .mdl__photo, .mdl__photo img { width: calc(50vw - 40px); }
+}

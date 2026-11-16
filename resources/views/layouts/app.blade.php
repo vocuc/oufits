@@ -31,6 +31,7 @@
                             <a href="{{ route('renders.index') }}" class="account__item">Thư viện ảnh</a>
                             <a href="{{ route('cover-templates.index') }}" class="account__item">Mẫu ảnh bìa</a>
                             <a href="{{ route('outfit-layouts.index') }}" class="account__item">Mẫu ảnh outfit</a>
+                            <a href="{{ route('models.index') }}" class="account__item">Người mẫu</a>
                             <a href="{{ route('guidelines.index') }}" class="account__item">Quy tắc</a>
                             <a href="{{ route('settings.edit') }}" class="account__item">Cài đặt</a>
                             <form method="post" action="{{ route('logout') }}">

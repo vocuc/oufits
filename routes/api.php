@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CoverTemplateApiController;
+use App\Http\Controllers\Api\FashionModelApiController;
 use App\Http\Controllers\Api\GuidelineApiController;
 use App\Http\Controllers\Api\OutfitApiController;
 use App\Http\Controllers\Api\OutfitLayoutApiController;
@@ -48,6 +49,11 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     // Mẫu ảnh outfit (layout ChatGPT vẽ; worker chỉ dùng mẫu đã duyệt)
     Route::get('outfit-layouts', [OutfitLayoutApiController::class, 'index']);
     Route::post('outfit-layouts', [OutfitLayoutApiController::class, 'upsert']);
+
+    // Người mẫu (chủ shop tải ảnh + ghi chú trên web; Claude viết prompt mô tả người mẫu)
+    Route::get('models', [FashionModelApiController::class, 'index']);
+    Route::get('models/{model}/photos/{photo}', [FashionModelApiController::class, 'photo'])->whereNumber(['model', 'photo']);
+    Route::put('models/{model}/prompt', [FashionModelApiController::class, 'prompt'])->whereNumber('model');
 
     // Món đồ + độ hợp giữa các món (D:\FlowKit\a51-skills\outfit-video\thiet-ke-item.txt)
     Route::put('outfits/{outfit}/items', [StylingItemApiController::class, 'putItems']);

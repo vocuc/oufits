@@ -117,10 +117,11 @@
         </div>
 
         @if ($nextOffset !== null)
-            {{-- Cuộn tới đây thì tự tải thêm; bấm được nếu trình duyệt không tự tải --}}
-            <div class="loadmore" data-loadmore>
-                <a class="btn" href="{{ route('outfits.index', array_filter(['tags' => implode(',', $selected) ?: null, 'offset' => $nextOffset])) }}"
-                   data-next="{{ $nextOffset }}">Tải thêm</a>
+            {{-- Cuộn tới đây thì tự tải thêm (không có nút) --}}
+            <div class="loadmore" data-loadmore
+                 data-url="{{ route('outfits.index', array_filter(['tags' => implode(',', $selected) ?: null])) }}"
+                 data-next="{{ $nextOffset }}">
+                <span class="muted" data-loadmore-status></span>
             </div>
         @endif
 
@@ -146,16 +147,17 @@
                 const box = document.querySelector("[data-loadmore]");
                 if (!box) return;
                 const grid = document.querySelector("[data-outfit-grid]");
-                const link = box.querySelector("[data-next]");
+                const status = box.querySelector("[data-loadmore-status]");
                 let loading = false;
 
                 const loadMore = async () => {
-                    if (loading || !link.dataset.next) return;
+                    if (loading || !box.dataset.next) return;
                     loading = true;
-                    link.textContent = "Đang tải…";
+                    status.textContent = "Đang tải…";
+                    status.classList.remove("loadmore__retry");
                     try {
-                        const url = new URL(link.href);
-                        url.searchParams.set("offset", link.dataset.next);
+                        const url = new URL(box.dataset.url, location.href);
+                        url.searchParams.set("offset", box.dataset.next);
                         const res = await fetch(url, { headers: { Accept: "application/json" } });
                         if (!res.ok) throw new Error(res.status);
                         const data = await res.json();
@@ -165,20 +167,23 @@
                             box.remove();
                             return;
                         }
-                        link.dataset.next = data.next_offset;
-                        link.textContent = "Tải thêm";
+                        box.dataset.next = data.next_offset;
+                        status.textContent = "";
                     } catch {
-                        link.textContent = "Lỗi tải, bấm để thử lại";
+                        status.textContent = "Lỗi tải, bấm để thử lại";
+                        status.classList.add("loadmore__retry");
                     } finally {
                         loading = false;
                     }
+                    // Trang chưa đủ dài để cuộn thì tải tiếp luôn
+                    if (!status.textContent && box.getBoundingClientRect().top < innerHeight + 600) loadMore();
                 };
 
                 const observer = new IntersectionObserver((entries) => {
                     if (entries.some((e) => e.isIntersecting)) loadMore();
                 }, { rootMargin: "600px 0px" });
                 observer.observe(box);
-                link.addEventListener("click", (e) => { e.preventDefault(); loadMore(); });
+                status.addEventListener("click", () => { if (status.classList.contains("loadmore__retry")) loadMore(); });
             })();
         </script>
     @endif

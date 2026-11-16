@@ -46,7 +46,8 @@
                             <b>{{ $t->code }} · {{ $t->name }}</b>
                             <span class="ctpl__status ctpl__status--{{ $t->status }}">{{ $t->statusLabel() }}</span>
                         </div>
-                        @if ($t->hook_type)
+                        {{-- Mẫu bìa chỉ quyết định cách trình bày hook; kiểu / chủ đề hook do Claude tự chọn theo ảnh bìa --}}
+                        @if ($t->hook_type && $route !== 'cover-templates')
                             <span class="chip">Hook: {{ $t->hook_type }}</span>
                         @endif
                         <div class="ctpl__text">{{ $t->how_to }}</div>

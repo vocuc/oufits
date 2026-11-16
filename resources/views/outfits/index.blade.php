@@ -2,18 +2,33 @@
 
 @php
     // Bật/tắt một hashtag trong bộ lọc hiện tại
-    $toggle = function (string $tag) use ($selected) {
+    $toggle = function (string $tag) use ($selected, $base) {
         $next = in_array($tag, $selected, true)
             ? array_values(array_diff($selected, [$tag]))
             : [...$selected, $tag];
 
-        return route('outfits.index', $next ? ['tags' => implode(',', $next)] : []);
+        return route('outfits.index', [...$base, ...($next ? ['tags' => implode(',', $next)] : [])]);
     };
 @endphp
 
 @section('content')
+    {{-- Tài khoản khác đã chia sẻ outfit cho mình: chọn xem outfit của ai --}}
+    @if ($owners->isNotEmpty())
+        <nav class="owners">
+            <span class="muted">Outfit của:</span>
+            <a href="{{ route('outfits.index') }}" class="chip {{ $base ? '' : 'is-active' }}">Tôi</a>
+            @foreach ($owners as $owner)
+                <a href="{{ route('outfits.index', ['owner' => $owner->id]) }}"
+                   class="chip {{ $ownerId === $owner->id ? 'is-active' : '' }}">{{ $owner->name }}</a>
+            @endforeach
+        </nav>
+    @endif
+
     <section class="filters">
         <form method="get" action="{{ route('outfits.index') }}" class="search">
+            @if ($base)
+                <input type="hidden" name="owner" value="{{ $ownerId }}">
+            @endif
             <input type="search" name="tags" value="{{ implode(' ', $selected) }}" data-tag-input
                    placeholder="Nhập hashtag, vd: thudong vay giaycaogot" autocomplete="off">
             <button class="btn btn--primary">Tìm</button>
@@ -25,7 +40,7 @@
                 @foreach ($selected as $tag)
                     <a href="{{ $toggle($tag) }}" class="chip is-active" title="Bỏ hashtag này">#{{ $tag }} ✕</a>
                 @endforeach
-                <a href="{{ route('outfits.index') }}" class="clear">Xóa lọc</a>
+                <a href="{{ route('outfits.index', $base) }}" class="clear">Xóa lọc</a>
             </div>
         @endif
 
@@ -119,7 +134,7 @@
         @if ($nextOffset !== null)
             {{-- Cuộn tới đây thì tự tải thêm (không có nút) --}}
             <div class="loadmore" data-loadmore
-                 data-url="{{ route('outfits.index', array_filter(['tags' => implode(',', $selected) ?: null])) }}"
+                 data-url="{{ route('outfits.index', array_filter([...$base, 'tags' => implode(',', $selected) ?: null])) }}"
                  data-next="{{ $nextOffset }}">
                 <span class="muted" data-loadmore-status></span>
             </div>

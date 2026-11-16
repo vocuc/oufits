@@ -37,5 +37,55 @@
                 </form>
             </div>
         </section>
+
+        <section class="block">
+            <div class="block__head">
+                <h2>Chia sẻ outfit</h2>
+            </div>
+            <div class="block__body">
+                <p>Tài khoản được thêm vào sẽ xem được <b>toàn bộ</b> outfit của bạn (cả outfit riêng tư), trên web
+                    (trang chủ, mục "Outfit của") và qua API <code>GET /api/outfits?owner={{ auth()->id() }}</code>.
+                    Họ chỉ xem, không sửa / xoá được.</p>
+
+                @if ($sharedWith->isNotEmpty())
+                    <ul class="shares">
+                        @foreach ($sharedWith as $viewer)
+                            <li>
+                                <span><b>{{ $viewer->name }}</b> <span class="muted">{{ $viewer->email }}</span></span>
+                                <form method="post" action="{{ route('shares.destroy', $viewer) }}"
+                                      onsubmit="return confirm('Thôi chia sẻ outfit với {{ addslashes($viewer->name) }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn--danger">Thôi chia sẻ</button>
+                                </form>
+                            </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="muted">Chưa chia sẻ cho tài khoản nào.</p>
+                @endif
+
+                <form method="post" action="{{ route('shares.store') }}" class="share-form">
+                    @csrf
+                    <input type="email" name="email" value="{{ old('email') }}" placeholder="Email tài khoản OOTD" required>
+                    <button class="btn btn--primary">Thêm</button>
+                </form>
+                @error('email')
+                    <div class="errors" style="margin-top:12px">{{ $message }}</div>
+                @enderror
+
+                @if ($sharedOwners->isNotEmpty())
+                    <h3>Được chia sẻ cho bạn</h3>
+                    <ul class="shares">
+                        @foreach ($sharedOwners as $owner)
+                            <li>
+                                <span><b>{{ $owner->name }}</b> <span class="muted">{{ $owner->email }}</span></span>
+                                <a class="btn" href="{{ route('outfits.index', ['owner' => $owner->id]) }}">Xem outfit</a>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        </section>
     </div>
 @endsection

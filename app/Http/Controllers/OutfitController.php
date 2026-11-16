@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-/** Mọi thao tác chỉ trên outfit của tài khoản đang đăng nhập. */
+/** Sửa / xoá chỉ trên outfit của mình; xem được cả outfit của tài khoản đã chia sẻ cho mình (?owner=). */
 class OutfitController extends Controller
 {
     private const FIRST_PAGE = 30;
@@ -30,7 +30,12 @@ class OutfitController extends Controller
         // Trang đầu 30 outfit mới nhất, cuộn xuống tải thêm 20 mỗi lần (?offset=)
         $offset = max(0, (int) $request->query('offset', 0));
         $limit = $offset === 0 ? self::FIRST_PAGE : self::MORE_PAGE;
-        $query = $user->outfits()->withAllHashtags($selected);
+        // ?owner=<id>: xem toàn bộ outfit của tài khoản đã chia sẻ cho mình (chỉ xem)
+        $ownerId = (int) $request->query('owner', $user->id);
+        abort_unless($user->canViewOutfitsOf($ownerId), 404);
+        $base = $ownerId === $user->id ? [] : ['owner' => $ownerId];
+
+        $query = Outfit::where('user_id', $ownerId)->withAllHashtags($selected);
         $total = (clone $query)->count();
         $outfits = $query->with(['hashtags', 'latestRender'])->withCount('renders')
             ->orderByDesc('created_at')->orderByDesc('id')
@@ -40,20 +45,22 @@ class OutfitController extends Controller
 
         if ($request->wantsJson()) {
             return response()->json([
-                'html' => view('outfits._cards', compact('outfits', 'selected'))->render(),
+                'html' => view('outfits._cards', compact('outfits', 'selected', 'base'))->render(),
                 'next_offset' => $nextOffset,
             ]);
         }
 
-        // Chỉ đếm hashtag trên outfit của tài khoản này
-        $mine = fn (Builder $q) => $q->where('user_id', $user->id);
+        // Chỉ đếm hashtag trên outfit của tài khoản đang xem
+        $mine = fn (Builder $q) => $q->where('user_id', $ownerId);
         $hashtags = Hashtag::withCount(['outfits' => $mine])
             ->whereHas('outfits', $mine)
             ->orderByDesc('outfits_count')
             ->orderBy('name')
             ->get();
 
-        return view('outfits.index', compact('outfits', 'hashtags', 'selected', 'total', 'nextOffset'));
+        $owners = $user->sharedOwners()->get(['users.id', 'users.name']);
+
+        return view('outfits.index', compact('outfits', 'hashtags', 'selected', 'total', 'nextOffset', 'base', 'owners', 'ownerId'));
     }
 
     /** Ghép prompt dùng chung của tài khoản + các outfit đã chọn: /compose?ids[]=1&ids[]=2 */
@@ -63,9 +70,8 @@ class OutfitController extends Controller
         $ids = collect((array) $request->query('ids', []))
             ->map(fn ($id) => (int) $id)->filter()->unique()->values();
 
-        // Outfit của mình + outfit công khai của người khác
-        $outfits = Outfit::whereIn('id', $ids)
-            ->where(fn (Builder $q) => $q->where('user_id', $user->id)->orWhere('is_public', true))
+        // Outfit của mình + outfit được chia sẻ + outfit công khai của người khác
+        $outfits = Outfit::whereIn('id', $ids)->visibleTo($user)
             ->get()
             ->sortBy(fn (Outfit $o) => $ids->search($o->id))->values();
 

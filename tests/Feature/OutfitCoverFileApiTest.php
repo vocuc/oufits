@@ -7,7 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
-/** GET /api/outfits/{id}/cover: worker phối đồ tải ảnh gốc outfit (chỉ outfit của mình, có ảnh bìa). */
+/** GET /api/outfits/{id}/cover: worker phối đồ tải ảnh gốc outfit (outfit của mình hoặc được chia sẻ, có ảnh bìa). */
 class OutfitCoverFileApiTest extends TestCase
 {
     use RefreshDatabase;
@@ -32,8 +32,13 @@ class OutfitCoverFileApiTest extends TestCase
         $this->assertContains($res->status(), [200, 302]); // disk có link tạm -> chuyển hướng
         $this->withToken($token)->get("/api/outfits/{$none->id}/cover")->assertNotFound();
 
-        $other = User::factory()->create()->issueApiToken();
+        $otherUser = User::factory()->create();
+        $other = $otherUser->issueApiToken();
         $this->withToken($other)->get("/api/outfits/{$outfit->id}/cover")->assertNotFound();
+
+        // Được chia sẻ thì tải được
+        $user->sharedWith()->attach($otherUser->id);
+        $this->assertContains($this->withToken($other)->get("/api/outfits/{$outfit->id}/cover")->status(), [200, 302]);
         $this->withoutToken()->getJson("/api/outfits/{$outfit->id}/cover")->assertUnauthorized();
     }
 }

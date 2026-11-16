@@ -20,6 +20,7 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     Route::post('outfits/{outfit}/cover', [OutfitApiController::class, 'cover']);
     Route::get('outfits/{outfit}/cover', [OutfitApiController::class, 'coverFile']);
     Route::put('outfits/{outfit}/hashtags', [OutfitApiController::class, 'hashtags']);
+    Route::get('outfit-shares', [OutfitApiController::class, 'shares']);
     Route::get('compose', [OutfitApiController::class, 'compose']);
 
     // Kho kiến thức phối đồ Claude học được (D:\FlowKit\a51-skills\outfit-video\thiet-ke-kien-thuc.txt)

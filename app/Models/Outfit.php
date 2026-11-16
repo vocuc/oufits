@@ -31,10 +31,18 @@ class Outfit extends Model
         return ['is_public' => 'boolean'];
     }
 
-    /** Chủ outfit xem được mọi outfit của mình; người khác chỉ xem được outfit công khai. */
+    /** Chủ outfit + tài khoản được chủ chia sẻ xem được mọi outfit; người khác chỉ xem được outfit công khai. */
     public function isVisibleTo(?User $user): bool
     {
-        return $this->is_public || ($user && $this->user_id === $user->id);
+        return $this->is_public || ($user && $user->canViewOutfitsOf((int) $this->user_id));
+    }
+
+    /** Outfit $user xem được: của mình + của người chia sẻ cho mình + công khai. */
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        return $query->where(fn (Builder $q) => $q->where('user_id', $user->id)
+            ->orWhere('is_public', true)
+            ->orWhereIn('user_id', $user->sharedOwners()->select('users.id')));
     }
 
     public function isOwnedBy(?User $user): bool

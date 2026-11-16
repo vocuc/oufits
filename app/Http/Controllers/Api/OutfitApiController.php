@@ -9,7 +9,6 @@ use App\Models\Outfit;
 use App\Models\OutfitLayout;
 use App\Support\OutfitWiper;
 use App\Support\PromptComposer;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,8 +24,10 @@ class OutfitApiController extends Controller
 
     /**
      * Danh sách outfit.
-     * Mặc định: outfit của mình (cả riêng tư) + outfit công khai của người khác.
+     * Mặc định: outfit của mình (cả riêng tư) + toàn bộ outfit tài khoản khác chia sẻ cho mình + outfit công khai.
      * ?scope=mine            -> chỉ outfit của mình (dùng để kiểm tra trùng trước khi thêm).
+     * ?owner=<user id>       -> toàn bộ outfit của tài khoản đó (cả riêng tư) nếu họ đã chia sẻ cho mình, không thì 404.
+     *                           Danh sách tài khoản đã chia sẻ: GET /api/outfit-shares.
      * ?tags=thudong,giayboot -> chỉ outfit có ĐỦ các hashtag này.
      * ?limit=50&offset=0     -> phân trang (limit tối đa 200); meta.next_offset = null khi hết.
      */
@@ -34,6 +35,7 @@ class OutfitApiController extends Controller
     {
         $request->validate([
             'scope' => ['nullable', 'in:all,mine'],
+            'owner' => ['nullable', 'integer', 'min:1'],
             'tags' => ['nullable', 'string', 'max:2000'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:'.self::MAX_LIMIT],
             'offset' => ['nullable', 'integer', 'min:0'],
@@ -46,9 +48,13 @@ class OutfitApiController extends Controller
             ->map(fn ($t) => Hashtag::normalize($t))
             ->filter()->unique()->values()->all();
 
-        $query = $request->query('scope') === 'mine'
-            ? $user->outfits()
-            : Outfit::where(fn (Builder $q) => $q->where('user_id', $user->id)->orWhere('is_public', true));
+        if ($request->filled('owner')) {
+            $ownerId = (int) $request->query('owner');
+            abort_unless($user->canViewOutfitsOf($ownerId), 404, 'Tài khoản này chưa chia sẻ outfit cho bạn.');
+            $query = Outfit::where('user_id', $ownerId);
+        } else {
+            $query = $request->query('scope') === 'mine' ? $user->outfits() : Outfit::visibleTo($user);
+        }
 
         $query->withAllHashtags($tags);
         $total = (clone $query)->count();
@@ -128,10 +134,26 @@ class OutfitApiController extends Controller
         return response()->json(['data' => $this->present($outfit->load('hashtags'))]);
     }
 
-    /** Tải ảnh bìa (ảnh gốc) của outfit của mình: worker phối đồ gửi ảnh này cho ChatGPT làm ảnh mẫu outfit. */
+    /**
+     * Tài khoản chia sẻ outfit qua lại: shared_with = mình chia sẻ cho ai; shared_owners = ai chia sẻ cho mình
+     * (dùng id làm ?owner= ở GET /api/outfits). Thêm / bỏ chia sẻ làm trên web (Cài đặt).
+     */
+    public function shares(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $list = fn ($q) => $q->get(['users.id', 'users.name', 'users.email'])
+            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email])->values();
+
+        return response()->json(['data' => [
+            'shared_with' => $list($user->sharedWith()),
+            'shared_owners' => $list($user->sharedOwners()),
+        ]]);
+    }
+
+    /** Tải ảnh bìa (ảnh gốc) của outfit của mình hoặc được chia sẻ cho mình: worker phối đồ gửi ảnh này cho ChatGPT làm ảnh mẫu outfit. */
     public function coverFile(Request $request, Outfit $outfit)
     {
-        abort_unless($outfit->user_id === $request->user()->id && $outfit->cover_path, 404);
+        abort_unless($outfit->cover_path && $request->user()->canViewOutfitsOf((int) $outfit->user_id), 404);
         $disk = Outfit::coverDisk();
         if ($disk->providesTemporaryUrls()) {
             return redirect()->away($disk->temporaryUrl($outfit->cover_path, now()->addMinutes(30)));

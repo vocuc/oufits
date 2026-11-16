@@ -1,12 +1,13 @@
 {{-- Các thẻ outfit; dùng cho trang chủ và cho phần tải thêm khi cuộn --}}
 @php
     // Bật/tắt một hashtag trong bộ lọc hiện tại
-    $toggle ??= function (string $tag) use ($selected) {
+    $base ??= [];
+    $toggle ??= function (string $tag) use ($selected, $base) {
         $next = in_array($tag, $selected, true)
             ? array_values(array_diff($selected, [$tag]))
             : [...$selected, $tag];
 
-        return route('outfits.index', $next ? ['tags' => implode(',', $next)] : []);
+        return route('outfits.index', [...$base, ...($next ? ['tags' => implode(',', $next)] : [])]);
     };
 @endphp
 @foreach ($outfits as $outfit)
@@ -36,6 +37,7 @@
 
         <div class="card__actions">
             <a href="{{ route('outfits.show', $outfit) }}" class="btn">Chi tiết</a>
+            @if ($outfit->isOwnedBy(auth()->user()))
             @if (($outfit->renders_count ?? 0) > 0)
                 <a href="{{ route('renders.index', ['outfit' => $outfit->id]) }}" class="btn">Ảnh ({{ $outfit->renders_count }})</a>
             @endif
@@ -45,6 +47,7 @@
                 @method('DELETE')
                 <button class="btn btn--danger" title="Xóa outfit này">Xóa</button>
             </form>
+            @endif
         </div>
     </article>
 @endforeach

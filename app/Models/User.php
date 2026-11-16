@@ -8,6 +8,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -56,6 +57,24 @@ class User extends Authenticatable
     public function outfits(): HasMany
     {
         return $this->hasMany(Outfit::class);
+    }
+
+    /** Tài khoản mình đã chia sẻ toàn bộ outfit cho (họ xem được cả outfit riêng tư của mình). */
+    public function sharedWith(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'outfit_shares', 'owner_id', 'viewer_id')->withTimestamps()->orderBy('name');
+    }
+
+    /** Tài khoản đã chia sẻ outfit của họ cho mình. */
+    public function sharedOwners(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'outfit_shares', 'viewer_id', 'owner_id')->withTimestamps()->orderBy('name');
+    }
+
+    /** Mình có được xem toàn bộ outfit của $ownerId không (chính mình hoặc được chia sẻ). */
+    public function canViewOutfitsOf(int $ownerId): bool
+    {
+        return $ownerId === $this->id || $this->sharedOwners()->whereKey($ownerId)->exists();
     }
 
     public function stylingRules(): HasMany

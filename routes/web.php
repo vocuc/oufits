@@ -6,6 +6,7 @@ use App\Http\Controllers\FashionModelController;
 use App\Http\Controllers\GuidelineController;
 use App\Http\Controllers\OutfitLayoutController;
 use App\Http\Controllers\OutfitController;
+use App\Http\Controllers\OutfitShareController;
 use App\Http\Controllers\RenderController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -57,4 +58,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::post('settings/token', [SettingsController::class, 'issueToken'])->name('settings.token');
+    Route::post('settings/shares', [OutfitShareController::class, 'store'])->name('shares.store');
+    Route::delete('settings/shares/{viewer}', [OutfitShareController::class, 'destroy'])->name('shares.destroy')->whereNumber('viewer');
 });

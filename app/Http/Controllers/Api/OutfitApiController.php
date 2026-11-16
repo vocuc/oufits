@@ -128,6 +128,19 @@ class OutfitApiController extends Controller
         return response()->json(['data' => $this->present($outfit->load('hashtags'))]);
     }
 
+    /** Tải ảnh bìa (ảnh gốc) của outfit của mình: worker phối đồ gửi ảnh này cho ChatGPT làm ảnh mẫu outfit. */
+    public function coverFile(Request $request, Outfit $outfit)
+    {
+        abort_unless($outfit->user_id === $request->user()->id && $outfit->cover_path, 404);
+        $disk = Outfit::coverDisk();
+        if ($disk->providesTemporaryUrls()) {
+            return redirect()->away($disk->temporaryUrl($outfit->cover_path, now()->addMinutes(30)));
+        }
+        abort_unless($disk->exists($outfit->cover_path), 404);
+
+        return $disk->response($outfit->cover_path);
+    }
+
     /** Xoá 1 outfit của mình (kèm món đồ, ảnh Thư viện ảnh, điểm chấm, ảnh bìa trên disk). */
     public function destroy(Request $request, Outfit $outfit): JsonResponse
     {

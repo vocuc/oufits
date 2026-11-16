@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(EnsureApiToken::class)->group(function () {
     Route::get('outfits', [OutfitApiController::class, 'index']);
     Route::post('outfits', [OutfitApiController::class, 'store']);
+    Route::delete('outfits', [OutfitApiController::class, 'destroyAll']); // ?confirm=xoa-het-outfit
+    Route::delete('outfits/{outfit}', [OutfitApiController::class, 'destroy']);
     Route::post('outfits/{outfit}/cover', [OutfitApiController::class, 'cover']);
     Route::put('outfits/{outfit}/hashtags', [OutfitApiController::class, 'hashtags']);
     Route::get('compose', [OutfitApiController::class, 'compose']);

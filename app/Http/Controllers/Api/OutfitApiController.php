@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Hashtag;
+use App\Models\ItemPair;
 use App\Models\Outfit;
 use App\Models\OutfitLayout;
+use App\Support\OutfitWiper;
 use App\Support\PromptComposer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -124,6 +126,31 @@ class OutfitApiController extends Controller
         $outfit->replaceCover($request->file('cover'));
 
         return response()->json(['data' => $this->present($outfit->load('hashtags'))]);
+    }
+
+    /** Xoá 1 outfit của mình (kèm món đồ, ảnh Thư viện ảnh, điểm chấm, ảnh bìa trên disk). */
+    public function destroy(Request $request, Outfit $outfit): JsonResponse
+    {
+        abort_unless($outfit->user_id === $request->user()->id, 404);
+
+        return response()->json(['data' => OutfitWiper::wipe($request->user(), [$outfit->id])]);
+    }
+
+    /**
+     * Xoá HẾT outfit của mình (2026-11-16, chủ shop muốn làm lại từ đầu).
+     * Bắt buộc ?confirm=xoa-het-outfit để tránh gọi nhầm. Xoá luôn món đồ, ảnh Thư viện ảnh,
+     * điểm chấm, cặp món đã học (item_pairs); giữ quy tắc, kiến thức phối đồ, layout, mẫu bìa.
+     */
+    public function destroyAll(Request $request): JsonResponse
+    {
+        if ($request->query('confirm') !== 'xoa-het-outfit') {
+            throw ValidationException::withMessages(['confirm' => 'Thêm ?confirm=xoa-het-outfit để xoá hết outfit.']);
+        }
+        $user = $request->user();
+        $result = OutfitWiper::wipe($user, $user->outfits()->pluck('id')->all());
+        $result['item_pairs'] = ItemPair::where('user_id', $user->id)->delete();
+
+        return response()->json(['data' => $result]);
     }
 
     /**

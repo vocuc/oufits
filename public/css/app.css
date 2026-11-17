@@ -342,3 +342,14 @@ main { padding-top: 20px; padding-bottom: 48px; }
 @media (max-width: 520px) {
     .mdl__photo, .mdl__photo img { width: calc(50vw - 40px); }
 }
+
+/* Trang Chủ đề (/themes) */
+.theme { display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; scroll-margin-top: 80px; }
+.theme--new { border-style: dashed; }
+.theme h2 { margin: 0; font-size: 16px; }
+.theme__head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.theme__head input { flex: 1 1 220px; font: inherit; font-weight: 600; font-size: 15px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--text); background: var(--bg); }
+.theme__count { font-size: 13px; color: var(--accent); text-decoration: none; }
+.theme__field { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.theme__field input, .theme__field select, .theme__field textarea { font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--text); background: var(--bg); width: 100%; box-sizing: border-box; }
+.theme__field textarea { resize: vertical; }

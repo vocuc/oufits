@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\FashionModelApiController;
 use App\Http\Controllers\Api\GuidelineApiController;
 use App\Http\Controllers\Api\OutfitApiController;
 use App\Http\Controllers\Api\OutfitLayoutApiController;
+use App\Http\Controllers\Api\OutfitThemeApiController;
 use App\Http\Controllers\Api\RenderApiController;
 use App\Http\Controllers\Api\StylingIdeaApiController;
 use App\Http\Controllers\Api\StylingItemApiController;
@@ -51,6 +52,10 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     // Mẫu ảnh outfit (layout ChatGPT vẽ; worker chỉ dùng mẫu đã duyệt)
     Route::get('outfit-layouts', [OutfitLayoutApiController::class, 'index']);
     Route::post('outfit-layouts', [OutfitLayoutApiController::class, 'upsert']);
+
+    // Chủ đề lô phối đồ (worker chọn ngẫu nhiên chủ đề đã duyệt; tạo qua API = chờ duyệt)
+    Route::get('themes', [OutfitThemeApiController::class, 'index']);
+    Route::post('themes', [OutfitThemeApiController::class, 'upsert']);
 
     // Người mẫu (chủ shop tải ảnh + ghi chú trên web; Claude viết prompt mô tả người mẫu)
     Route::get('models', [FashionModelApiController::class, 'index']);

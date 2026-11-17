@@ -7,6 +7,7 @@ use App\Http\Controllers\GuidelineController;
 use App\Http\Controllers\OutfitLayoutController;
 use App\Http\Controllers\OutfitController;
 use App\Http\Controllers\OutfitShareController;
+use App\Http\Controllers\OutfitThemeController;
 use App\Http\Controllers\RenderController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,11 @@ Route::middleware('auth')->group(function () {
     Route::put('outfit-layouts/{template}/prompt', [OutfitLayoutController::class, 'updatePrompt'])->name('outfit-layouts.prompt');
     Route::delete('outfit-layouts/{template}', [OutfitLayoutController::class, 'destroy'])->name('outfit-layouts.destroy');
     Route::get('outfit-layouts/{template}/image', [OutfitLayoutController::class, 'image'])->name('outfit-layouts.image');
+
+    Route::get('themes', [OutfitThemeController::class, 'index'])->name('themes.index');
+    Route::post('themes', [OutfitThemeController::class, 'store'])->name('themes.store');
+    Route::put('themes/{theme}', [OutfitThemeController::class, 'update'])->name('themes.update')->whereNumber('theme');
+    Route::delete('themes/{theme}', [OutfitThemeController::class, 'destroy'])->name('themes.destroy')->whereNumber('theme');
 
     Route::get('models', [FashionModelController::class, 'index'])->name('models.index');
     Route::post('models', [FashionModelController::class, 'store'])->name('models.store');

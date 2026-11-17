@@ -34,6 +34,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function outfitThemes(): HasMany
+    {
+        return $this->hasMany(OutfitTheme::class);
+    }
+
     public function guidelines(): HasMany
     {
         return $this->hasMany(Guideline::class);

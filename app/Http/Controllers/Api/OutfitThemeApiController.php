@@ -3,63 +3,89 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\OutfitTheme;
+use App\Models\OutfitThemeHook;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 /**
- * Chủ đề lô phối đồ (worker / Claude).
- *   GET  /api/themes?status=approved -> chủ đề (tags, hooks dạng mảng, outfit_count = số outfit có đủ tag + ảnh gốc)
- *   POST /api/themes {name, tags, hooks, season?, note?, sort?} -> tạo / cập nhật theo name.
- *        tags: chuỗi "a b" hoặc mảng; hooks: chuỗi nhiều dòng hoặc mảng. Tạo mới = chờ duyệt; KHÔNG đổi status (chỉ chủ shop duyệt trên web).
+ * Chủ đề (chỉ gom nhóm) + hook (hashtag riêng, duyệt riêng) cho worker / Claude.
+ *   GET  /api/themes?status=approved -> chủ đề kèm hooks [{id, body, tags[], status, outfit_count}]; có status thì chỉ
+ *        hook ở trạng thái đó và bỏ chủ đề không còn hook nào.
+ *   POST /api/themes {name, note?, sort?, hooks?: [{body, tags}]} -> tạo / cập nhật chủ đề theo name; hook so theo body:
+ *        mới = chờ duyệt, đã có = sửa tags. KHÔNG đổi status, KHÔNG xoá hook không gửi (chủ shop quản lý trên web).
+ *   PUT  /api/theme-hooks/{id} {body?, tags?} -> sửa câu / hashtag một hook (không đổi status).
  */
 class OutfitThemeApiController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $data = $request->validate(['status' => ['nullable', Rule::in(array_keys(OutfitTheme::STATUSES))]]);
-        $rows = $request->user()->outfitThemes()
-            ->when($data['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
-            ->orderBy('sort')->orderBy('id')->get();
+        $data = $request->validate(['status' => ['nullable', Rule::in(array_keys(OutfitThemeHook::STATUSES))]]);
+        $status = $data['status'] ?? null;
+        $rows = $request->user()->outfitThemes()->with('hooks.theme')->orderBy('sort')->orderBy('id')->get()
+            ->map->toApi($status)
+            ->when($status, fn ($c) => $c->filter(fn ($t) => $t['hooks']))
+            ->values();
 
-        return response()->json(['data' => $rows->map->toApi()->values()]);
+        return response()->json(['data' => $rows]);
     }
 
     public function upsert(Request $request): JsonResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'tags' => ['required'],
-            'tags.*' => ['nullable', 'string', 'max:100'],
-            'hooks' => ['required'],
-            'hooks.*' => ['nullable', 'string', 'max:1000'],
-            'season' => ['nullable', Rule::in(array_keys(OutfitTheme::SEASONS))],
             'note' => ['nullable', 'string', 'max:5000'],
             'sort' => ['nullable', 'integer', 'min:0'],
+            'hooks' => ['nullable', 'array', 'max:100'],
+            'hooks.*.body' => ['required', 'string', 'max:500'],
+            'hooks.*.tags' => ['required'],
         ]);
-        $tags = OutfitTheme::normalizeTags($data['tags']);
-        $hooks = OutfitTheme::normalizeHooks($data['hooks']);
-        if ($tags === '' || $hooks === '') {
-            return response()->json(['message' => 'Cần ít nhất 1 hashtag và 1 câu hook.',
-                'errors' => ['tags' => ['Cần ít nhất 1 hashtag và 1 câu hook.']]], 422);
+        $hooks = collect($data['hooks'] ?? [])->map(fn ($h) => [
+            'body' => OutfitThemeHook::normalizeBody($h['body']), 'tags' => OutfitThemeHook::normalizeTags($h['tags']),
+        ]);
+        if ($hooks->contains(fn ($h) => $h['body'] === '' || $h['tags'] === '')) {
+            return response()->json(['message' => 'Mỗi hook cần câu hook và ít nhất 1 hashtag.',
+                'errors' => ['hooks' => ['Mỗi hook cần câu hook và ít nhất 1 hashtag.']]], 422);
         }
         $user = $request->user();
-        $fields = ['tags' => $tags, 'hooks' => $hooks, 'season' => $data['season'] ?? null, 'note' => $data['note'] ?? null];
-        if (isset($data['sort'])) {
-            $fields['sort'] = $data['sort'];
-        }
-        $theme = $user->outfitThemes()->where('name', trim($data['name']))->first();
+        $name = trim($data['name']);
+        $theme = $user->outfitThemes()->where('name', $name)->first();
         $created = ! $theme;
+        $fields = array_filter(['note' => $data['note'] ?? null, 'sort' => $data['sort'] ?? null], fn ($v) => $v !== null);
         if ($created) {
-            $theme = $user->outfitThemes()->create($fields + [
-                'name' => trim($data['name']), 'status' => OutfitTheme::PENDING,
-                'sort' => $fields['sort'] ?? (int) $user->outfitThemes()->max('sort') + 1,
-            ]);
-        } else {
+            $theme = $user->outfitThemes()->create($fields + ['name' => $name, 'sort' => (int) $user->outfitThemes()->max('sort') + 1]);
+        } elseif ($fields) {
             $theme->update($fields);
         }
+        $sort = (int) $theme->hooks()->max('sort');
+        foreach ($hooks->unique('body') as $h) {
+            $hook = $theme->hooks()->where('body', $h['body'])->first();
+            $hook ? $hook->update(['tags' => $h['tags']])
+                : $theme->hooks()->create($h + ['status' => OutfitThemeHook::PENDING, 'sort' => ++$sort]);
+        }
 
-        return response()->json(['data' => $theme->fresh()->toApi(), 'created' => $created], $created ? 201 : 200);
+        return response()->json(['data' => $theme->fresh()->load('hooks.theme')->toApi(), 'created' => $created], $created ? 201 : 200);
+    }
+
+    public function updateHook(Request $request, int $id): JsonResponse
+    {
+        $hook = OutfitThemeHook::query()->whereHas('theme', fn ($q) => $q->where('user_id', $request->user()->id))->findOrFail($id);
+        $data = $request->validate([
+            'body' => ['sometimes', 'required', 'string', 'max:500'],
+            'tags' => ['sometimes', 'required'],
+        ]);
+        $fields = [];
+        if (isset($data['body'])) {
+            $fields['body'] = OutfitThemeHook::normalizeBody($data['body']);
+        }
+        if (isset($data['tags'])) {
+            $fields['tags'] = OutfitThemeHook::normalizeTags($data['tags']);
+        }
+        if (in_array('', $fields, true)) {
+            return response()->json(['message' => 'Hook cần câu hook và ít nhất 1 hashtag.'], 422);
+        }
+        $hook->update($fields);
+
+        return response()->json(['data' => $hook->fresh()->toApi()]);
     }
 }

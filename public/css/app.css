@@ -353,3 +353,13 @@ main { padding-top: 20px; padding-bottom: 48px; }
 .theme__field { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
 .theme__field input, .theme__field select, .theme__field textarea { font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--text); background: var(--bg); width: 100%; box-sizing: border-box; }
 .theme__field textarea { resize: vertical; }
+.theme__note { flex: 2 1 260px !important; font-weight: 400 !important; }
+.hooks { display: grid; gap: 6px; }
+.hooks__row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto; gap: 8px; align-items: center; scroll-margin-top: 80px; }
+.hooks__row--head { font-size: 12px; color: var(--muted); }
+.hooks__row input { font: inherit; font-size: 14px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--text); background: var(--bg); width: 100%; box-sizing: border-box; }
+.hooks__row--new input { border-style: dashed; }
+.hooks__meta { display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+.hooks__actions { grid-column: 1 / -1; justify-content: flex-end; }
+.hooks__row:not(.hooks__row--head):not(.hooks__row--new) { padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+@media (max-width: 700px) { .hooks__row { grid-template-columns: 1fr; } .hooks__row--head { display: none; } }

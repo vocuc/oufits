@@ -53,9 +53,10 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     Route::get('outfit-layouts', [OutfitLayoutApiController::class, 'index']);
     Route::post('outfit-layouts', [OutfitLayoutApiController::class, 'upsert']);
 
-    // Chủ đề lô phối đồ (worker chọn ngẫu nhiên chủ đề đã duyệt; tạo qua API = chờ duyệt)
+    // Chủ đề (gom nhóm) + hook có hashtag riêng, duyệt riêng (worker chỉ dùng hook đã duyệt; tạo qua API = chờ duyệt)
     Route::get('themes', [OutfitThemeApiController::class, 'index']);
     Route::post('themes', [OutfitThemeApiController::class, 'upsert']);
+    Route::put('theme-hooks/{id}', [OutfitThemeApiController::class, 'updateHook'])->whereNumber('id');
 
     // Người mẫu (chủ shop tải ảnh + ghi chú trên web; Claude viết prompt mô tả người mẫu)
     Route::get('models', [FashionModelApiController::class, 'index']);

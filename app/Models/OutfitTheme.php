@@ -4,102 +4,36 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Chủ đề lô phối đồ: hashtag bắt buộc (outfit phải có đủ) + nhiều câu hook (tiêu đề lô) + mùa.
- * Worker chọn ngẫu nhiên trong các chủ đề ĐÃ DUYỆT còn đủ outfit; chủ shop thêm / sửa / duyệt trên trang Chủ đề.
+ * Chủ đề lô phối đồ: CHỈ để gom nhóm các câu hook (người dùng chốt 2026-11-17). Hashtag tìm outfit và trạng thái duyệt
+ * nằm ở từng hook (OutfitThemeHook). Worker chọn ngẫu nhiên 1 chủ đề rồi 1 hook đã duyệt còn đủ outfit trong chủ đề đó.
  */
 class OutfitTheme extends Model
 {
-    public const PENDING = 'pending';
-
-    public const APPROVED = 'approved';
-
-    public const REJECTED = 'rejected';
-
-    public const STATUSES = [
-        self::PENDING => 'Chờ duyệt',
-        self::APPROVED => 'Đã duyệt',
-        self::REJECTED => 'Bỏ',
-    ];
-
-    public const SEASONS = [
-        'thudong' => 'Thu đông',
-        'xuanhe' => 'Xuân hè',
-    ];
-
     protected $guarded = ['id'];
 
     protected $hidden = ['user_id'];
-
-    protected function casts(): array
-    {
-        return ['reviewed_at' => 'datetime'];
-    }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /** "#chanvaymini, Tất cao cổ" -> "chanvaymini tatcaoco" (chuẩn hoá như hashtag outfit, bỏ trùng). */
-    public static function normalizeTags(string|array|null $input): string
+    public function hooks(): HasMany
     {
-        return collect(is_array($input) ? $input : preg_split('/[\s,]+/u', (string) $input))
-            ->map(fn ($t) => Hashtag::normalize((string) $t))
-            ->filter()->unique()->implode(' ');
+        return $this->hasMany(OutfitThemeHook::class)->orderBy('sort')->orderBy('id');
     }
 
-    /** Mỗi dòng một hook: bỏ dòng trống, khoảng trắng thừa, dòng trùng. */
-    public static function normalizeHooks(string|array|null $input): string
+    /** Dữ liệu trả API (worker); $status: chỉ hook ở trạng thái này. */
+    public function toApi(?string $status = null): array
     {
-        return collect(is_array($input) ? $input : preg_split('/\R/u', (string) $input))
-            ->map(fn ($h) => trim(preg_replace('/\s+/u', ' ', (string) $h)))
-            ->filter()->unique()->implode("\n");
-    }
+        $hooks = $this->hooks->when($status, fn ($c) => $c->where('status', $status))->values();
 
-    /** @return list<string> */
-    public function tagList(): array
-    {
-        return array_values(array_filter(explode(' ', (string) $this->tags)));
-    }
-
-    /** @return list<string> */
-    public function hookList(): array
-    {
-        // /u bắt buộc: thiếu nó \R khớp byte 0x85 nằm trong chữ "ễ" (E1 BB 85) -> cắt giữa chữ, UTF-8 hỏng
-        return array_values(array_filter(preg_split('/\R/u', (string) $this->hooks)));
-    }
-
-    /** Số outfit của chủ shop có ĐỦ hashtag của chủ đề và có ảnh gốc (worker chỉ dùng outfit có ảnh gốc). */
-    public function outfitCount(): int
-    {
-        $tags = $this->tagList();
-        if (! $tags) {
-            return 0;
-        }
-
-        return Outfit::query()->where('user_id', $this->user_id)->whereNotNull('cover_path')
-            ->withAllHashtags($tags)->count();
-    }
-
-    public function statusLabel(): string
-    {
-        return self::STATUSES[$this->status] ?? $this->status;
-    }
-
-    public function seasonLabel(): string
-    {
-        return self::SEASONS[$this->season] ?? 'Mọi mùa';
-    }
-
-    /** Dữ liệu trả API (worker): tags / hooks dạng mảng + số outfit khớp. */
-    public function toApi(): array
-    {
         return [
-            'id' => $this->id, 'name' => $this->name, 'tags' => $this->tagList(), 'hooks' => $this->hookList(),
-            'season' => $this->season, 'note' => $this->note, 'status' => $this->status, 'sort' => $this->sort,
-            'outfit_count' => $this->outfitCount(), 'updated_at' => $this->updated_at,
+            'id' => $this->id, 'name' => $this->name, 'note' => $this->note, 'sort' => $this->sort,
+            'hooks' => $hooks->map->toApi()->all(), 'updated_at' => $this->updated_at,
         ];
     }
 }

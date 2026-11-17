@@ -4,11 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\Outfit;
 use App\Models\OutfitTheme;
+use App\Models\OutfitThemeHook;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-/** Trang "Chủ đề" (/themes) + GET/POST /api/themes (worker chọn chủ đề đã duyệt, đếm outfit khớp). */
+/**
+ * Trang "Chủ đề" (/themes) + /api/themes: chủ đề chỉ gom nhóm, mỗi hook có hashtag riêng (tìm outfit) + duyệt riêng.
+ */
 class OutfitThemeTest extends TestCase
 {
     use RefreshDatabase;
@@ -24,98 +28,111 @@ class OutfitThemeTest extends TestCase
         return $o;
     }
 
-    public function test_owner_adds_edits_reviews_and_deletes_themes(): void
+    public function test_owner_manages_themes_and_hooks_on_web(): void
     {
         $user = User::factory()->create();
+        $this->outfit($user, 'chanvaymini tatcaoco thudong');
         $this->actingAs($user)->get('/themes')->assertOk()->assertSee('Chưa có chủ đề nào');
 
-        $this->actingAs($user)->post('/themes', [
-            'name' => ' Váy ngắn + tất ', 'tags' => '#chanvaymini, TatCaoCo chanvaymini',
-            'hooks' => "Váy ngắn mix *tất cao cổ*\n\n  Váy ngắn mix *tất cao cổ*  \nĐông này mặc *váy ngắn*", 'season' => 'thudong',
-        ])->assertRedirect();
+        $this->actingAs($user)->post('/themes', ['name' => ' Váy ngắn ', 'note' => 'mùa đông'])->assertRedirect();
         $theme = OutfitTheme::query()->sole();
-        $this->assertSame('Váy ngắn + tất', $theme->name);
-        $this->assertSame(['chanvaymini', 'tatcaoco'], $theme->tagList());
-        $this->assertSame(['Váy ngắn mix *tất cao cổ*', 'Đông này mặc *váy ngắn*'], $theme->hookList());
-        $this->assertSame(OutfitTheme::PENDING, $theme->fresh()->status);
+        $this->assertSame('Váy ngắn', $theme->name);
+        $this->actingAs($user)->post('/themes', ['name' => 'Váy ngắn'])->assertSessionHasErrors('name');
 
-        $this->actingAs($user)->post('/themes', ['name' => 'Váy ngắn + tất', 'tags' => 'a', 'hooks' => 'b'])
-            ->assertSessionHasErrors('name');
-        $this->actingAs($user)->post('/themes', ['name' => 'Rỗng', 'tags' => '# ,', 'hooks' => 'b'])
-            ->assertSessionHasErrors('tags');
+        $this->actingAs($user)->post("/themes/{$theme->id}/hooks", ['body' => '  Váy ngắn mix  *tất cao cổ* ', 'tags' => '#chanvaymini, TatCaoCo thudong'])
+            ->assertRedirect();
+        $hook = OutfitThemeHook::query()->sole();
+        $this->assertSame('Váy ngắn mix *tất cao cổ*', $hook->body);
+        $this->assertSame(['chanvaymini', 'tatcaoco', 'thudong'], $hook->tagList());
+        $this->assertSame(OutfitThemeHook::PENDING, $hook->fresh()->status);
+        $this->assertSame(1, $hook->outfitCount());
+        $this->actingAs($user)->post("/themes/{$theme->id}/hooks", ['body' => 'Váy ngắn mix *tất cao cổ*', 'tags' => 'x'])
+            ->assertSessionHasErrors('body');
+        $this->actingAs($user)->post("/themes/{$theme->id}/hooks", ['body' => 'Rỗng', 'tags' => '# ,'])->assertSessionHasErrors('tags');
 
-        $this->actingAs($user)->put("/themes/{$theme->id}", [
-            'name' => 'Váy ngắn + tất', 'tags' => 'chanvaymini tatcaoco', 'hooks' => 'Hook mới', 'season' => '', 'status' => 'approved',
-        ])->assertRedirect();
-        $theme->refresh();
-        $this->assertSame(OutfitTheme::APPROVED, $theme->status);
-        $this->assertNull($theme->season);
-        $this->assertNotNull($theme->reviewed_at);
-        // "Lưu" (status rỗng) không đổi trạng thái
-        $this->actingAs($user)->put("/themes/{$theme->id}", ['name' => 'Váy ngắn + tất', 'tags' => 'chanvaymini', 'hooks' => 'Hook mới', 'status' => '']);
-        $this->assertSame(OutfitTheme::APPROVED, $theme->fresh()->status);
-        $this->actingAs($user)->get('/themes')->assertSee('Hook mới')->assertSee('0 outfit khớp');
+        // duyệt từng hook; "Lưu" (status rỗng) sửa câu / hashtag, giữ trạng thái
+        $this->actingAs($user)->put("/theme-hooks/{$hook->id}", ['body' => $hook->body, 'tags' => 'chanvaymini', 'status' => 'approved'])->assertRedirect();
+        $this->assertSame(OutfitThemeHook::APPROVED, $hook->fresh()->status);
+        $this->assertNotNull($hook->fresh()->reviewed_at);
+        $this->actingAs($user)->put("/theme-hooks/{$hook->id}", ['body' => 'Hook mới', 'tags' => 'chanvaymini tatcaoco', 'status' => '']);
+        $this->assertSame(['Hook mới', OutfitThemeHook::APPROVED], [$hook->fresh()->body, $hook->fresh()->status]);
+        $this->actingAs($user)->get('/themes')->assertSee('Hook mới')->assertSee('1 outfit');
+        $this->actingAs($user)->get('/themes?status=pending')->assertDontSee('Hook mới');
 
         $other = User::factory()->create();
-        $this->actingAs($other)->put("/themes/{$theme->id}", ['name' => 'x', 'tags' => 'x', 'hooks' => 'x'])->assertNotFound();
+        $this->actingAs($other)->put("/theme-hooks/{$hook->id}", ['body' => 'x', 'tags' => 'x'])->assertNotFound();
+        $this->actingAs($other)->delete("/theme-hooks/{$hook->id}")->assertNotFound();
+        $this->actingAs($other)->post("/themes/{$theme->id}/hooks", ['body' => 'x', 'tags' => 'x'])->assertNotFound();
         $this->actingAs($other)->delete("/themes/{$theme->id}")->assertNotFound();
         $this->actingAs($other)->get('/themes')->assertDontSee('Hook mới');
 
+        $this->actingAs($user)->delete("/theme-hooks/{$hook->id}")->assertRedirect();
+        $this->assertSame(0, OutfitThemeHook::query()->count());
+        $theme->hooks()->create(['body' => 'A', 'tags' => 'a']);
         $this->actingAs($user)->delete("/themes/{$theme->id}")->assertRedirect();
-        $this->assertSame(0, OutfitTheme::query()->count());
+        $this->assertSame([0, 0], [OutfitTheme::query()->count(), OutfitThemeHook::query()->count()]);
     }
 
-    public function test_api_lists_counts_and_upserts_without_changing_status(): void
+    public function test_api_upserts_hooks_without_changing_status_and_filters_by_status(): void
     {
         $user = User::factory()->create();
         $token = $user->issueApiToken();
         $this->outfit($user, 'chanvaymini tatcaoco thudong');
         $this->outfit($user, 'chanvaymini tatcaoco');
-        $this->outfit($user, 'chanvaymini tatcaoco', cover: false);   // không ảnh gốc -> không đếm
-        $this->outfit($user, 'chanvaymini');                          // thiếu tag -> không đếm
+        $this->outfit($user, 'chanvaymini tatcaoco', cover: false);       // không ảnh gốc -> không đếm
         $this->outfit(User::factory()->create(), 'chanvaymini tatcaoco'); // của người khác
 
-        $this->withToken($token)->postJson('/api/themes', [
-            'name' => 'Váy ngắn + tất', 'tags' => ['chanvaymini', '#TatCaoCo'], 'hooks' => ['Hook 1', 'Hook 2', ''],
-            'season' => 'thudong', 'status' => 'approved',
-        ])->assertCreated()->assertJsonPath('created', true)->assertJsonPath('data.status', 'pending')
-            ->assertJsonPath('data.tags', ['chanvaymini', 'tatcaoco'])->assertJsonPath('data.hooks', ['Hook 1', 'Hook 2'])
-            ->assertJsonPath('data.outfit_count', 2);
-        $this->withToken($token)->postJson('/api/themes', ['name' => 'Short trắng', 'tags' => 'quanshort mautrang', 'hooks' => "A\nB"])
-            ->assertCreated();
-        $this->withToken($token)->postJson('/api/themes', ['name' => 'X', 'tags' => '', 'hooks' => 'A'])->assertUnprocessable();
-        $this->withToken($token)->postJson('/api/themes', ['name' => 'X', 'tags' => 'a', 'hooks' => 'A', 'season' => 'he'])->assertUnprocessable();
+        $hooks = [['body' => '*Trễ vai* dễ mặc', 'tags' => ['chanvaymini', '#TatCaoCo']], ['body' => 'Đông này', 'tags' => 'chanvaymini thudong']];
+        $this->withToken($token)->postJson('/api/themes', ['name' => 'Váy ngắn', 'hooks' => $hooks, 'status' => 'approved'])
+            ->assertCreated()->assertJsonPath('created', true)
+            ->assertJsonPath('data.hooks.0.body', '*Trễ vai* dễ mặc')->assertJsonPath('data.hooks.0.tags', ['chanvaymini', 'tatcaoco'])
+            ->assertJsonPath('data.hooks.0.status', 'pending')->assertJsonPath('data.hooks.0.outfit_count', 2)
+            ->assertJsonPath('data.hooks.1.outfit_count', 1);
+        $this->withToken($token)->postJson('/api/themes', ['name' => 'X', 'hooks' => [['body' => 'A', 'tags' => '']]])->assertUnprocessable();
+        $this->withToken($token)->postJson('/api/themes', ['name' => 'X', 'hooks' => [['body' => 'A']]])->assertUnprocessable();
 
-        $theme = $user->outfitThemes()->where('name', 'Váy ngắn + tất')->first();
-        $theme->update(['status' => OutfitTheme::APPROVED]);
-        // upsert theo name: sửa hook, giữ trạng thái đã duyệt
-        $this->withToken($token)->postJson('/api/themes', ['name' => 'Váy ngắn + tất', 'tags' => 'chanvaymini tatcaoco', 'hooks' => 'Hook 3'])
-            ->assertOk()->assertJsonPath('created', false)->assertJsonPath('data.status', 'approved')
-            ->assertJsonPath('data.hooks', ['Hook 3']);
+        $theme = $user->outfitThemes()->sole();
+        $theme->hooks()->where('body', 'Đông này')->update(['status' => OutfitThemeHook::APPROVED]);
+        // upsert theo name + body: sửa tags hook cũ (giữ đã duyệt), thêm hook mới chờ duyệt, không xoá hook không gửi
+        $this->withToken($token)->postJson('/api/themes', ['name' => 'Váy ngắn', 'note' => 'n',
+            'hooks' => [['body' => 'Đông này', 'tags' => 'chanvaymini'], ['body' => 'Hook 3', 'tags' => 'a']]])
+            ->assertOk()->assertJsonPath('created', false)->assertJsonCount(3, 'data.hooks')
+            ->assertJsonPath('data.hooks.1.status', 'approved')->assertJsonPath('data.hooks.1.tags', ['chanvaymini'])
+            ->assertJsonPath('data.hooks.2.status', 'pending')->assertJsonPath('data.note', 'n');
 
+        $hookId = $theme->hooks()->where('body', 'Hook 3')->value('id');
+        $this->withToken($token)->putJson("/api/theme-hooks/{$hookId}", ['tags' => 'chanvaymini tatcaoco thudong'])
+            ->assertOk()->assertJsonPath('data.outfit_count', 1)->assertJsonPath('data.status', 'pending');
+        $this->withToken($token)->putJson("/api/theme-hooks/{$hookId}", ['tags' => ''])->assertUnprocessable();
+
+        $this->withToken($token)->postJson('/api/themes', ['name' => 'Chưa duyệt', 'hooks' => [['body' => 'B', 'tags' => 'b']]])->assertCreated();
         $this->withToken($token)->getJson('/api/themes')->assertOk()->assertJsonCount(2, 'data');
         $this->withToken($token)->getJson('/api/themes?status=approved')->assertOk()->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.name', 'Váy ngắn + tất')->assertJsonPath('data.0.outfit_count', 2)
-            ->assertJsonMissingPath('data.0.user_id');
+            ->assertJsonPath('data.0.name', 'Váy ngắn')->assertJsonCount(1, 'data.0.hooks')
+            ->assertJsonPath('data.0.hooks.0.body', 'Đông này')->assertJsonMissingPath('data.0.user_id');
         $this->withToken($token)->getJson('/api/themes?status=abc')->assertUnprocessable();
-        $this->withToken(User::factory()->create()->issueApiToken())->getJson('/api/themes')->assertOk()->assertJsonCount(0, 'data');
+
+        $otherToken = User::factory()->create()->issueApiToken();
+        $this->withToken($otherToken)->getJson('/api/themes')->assertOk()->assertJsonCount(0, 'data');
+        $this->withToken($otherToken)->putJson("/api/theme-hooks/{$hookId}", ['tags' => 'x'])->assertNotFound();
         $this->flushHeaders()->getJson('/api/themes')->assertUnauthorized();
     }
 
-    /** "ễ" = E1 BB 85: preg_split('/\R/') không có /u cắt ở byte 0x85 -> JSON lỗi "Malformed UTF-8" (prod 2026-11-17). */
-    public function test_vietnamese_hooks_with_byte_0x85_stay_intact(): void
+    /** Migration tách hook: mỗi dòng của outfit_themes.hooks cũ -> 1 hook (tags + trạng thái của chủ đề), "ễ" không hỏng. */
+    public function test_migration_moves_old_theme_hooks_into_rows(): void
     {
+        $this->artisan('migrate:rollback', ['--step' => 1])->assertSuccessful();
         $user = User::factory()->create();
+        DB::table('outfit_themes')->insert([
+            'user_id' => $user->id, 'name' => 'Áo trễ vai', 'tags' => 'aotrevai', 'status' => 'approved',
+            'hooks' => "*Trễ vai* nhẹ thôi\nMùa đông dễ mặc\n\n*Trễ vai* nhẹ thôi", 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->artisan('migrate')->assertSuccessful();
+
+        $theme = OutfitTheme::query()->sole();
+        $this->assertSame(['*Trễ vai* nhẹ thôi', 'Mùa đông dễ mặc'], $theme->hooks->pluck('body')->all());
+        $this->assertSame([['aotrevai'], 'approved'], [$theme->hooks[0]->tagList(), $theme->hooks[0]->status]);
         $token = $user->issueApiToken();
-        $hooks = ['*Trễ vai* nhẹ thôi là đủ hút mắt', 'Mùa đông dễ mặc nhất'];
-        $this->withToken($token)->postJson('/api/themes', ['name' => 'Áo trễ vai', 'tags' => 'aotrevai', 'hooks' => $hooks])
-            ->assertCreated()->assertJsonPath('data.hooks', $hooks);
-        $this->withToken($token)->postJson('/api/themes', ['name' => 'Áo len', 'tags' => 'aolen', 'hooks' => implode("\n", $hooks)])
-            ->assertCreated()->assertJsonPath('data.hooks', $hooks);
-        $this->withToken($token)->getJson('/api/themes')->assertOk()->assertJsonCount(2, 'data')
-            ->assertJsonPath('data.0.hooks', $hooks);
-        $this->actingAs($user)->post('/themes', ['name' => 'Web ễ', 'tags' => 'Trễ vai', 'hooks' => "Dễ mặc\nTrễ vai"])->assertRedirect();
-        $this->assertSame(['Dễ mặc', 'Trễ vai'], $user->outfitThemes()->where('name', 'Web ễ')->sole()->hookList());
-        $this->actingAs($user)->get('/themes')->assertOk()->assertSee('Dễ mặc');
+        $this->withToken($token)->getJson('/api/themes?status=approved')->assertOk()->assertJsonCount(2, 'data.0.hooks');
     }
 }

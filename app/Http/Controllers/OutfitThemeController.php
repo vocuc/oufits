@@ -90,6 +90,17 @@ class OutfitThemeController extends Controller
         return $this->back('chu-de-'.$theme, 'Đã xoá hook.');
     }
 
+    /** "Duyệt hết": mọi hook đang chờ duyệt của tài khoản, hoặc của một chủ đề (?theme=id). */
+    public function approvePending(Request $request)
+    {
+        $themes = $request->user()->outfitThemes()->when($request->integer('theme'), fn ($q, $id) => $q->whereKey($id))->pluck('id');
+        $n = OutfitThemeHook::query()->whereIn('outfit_theme_id', $themes)->where('status', OutfitThemeHook::PENDING)
+            ->update(['status' => OutfitThemeHook::APPROVED, 'reviewed_at' => now()]);
+        $anchor = $request->integer('theme') ? 'chu-de-'.$request->integer('theme') : 'top';
+
+        return $this->back($anchor, "Đã duyệt {$n} hook.");
+    }
+
     private function themeData(Request $request, ?OutfitTheme $theme = null): array
     {
         $data = $request->validate([

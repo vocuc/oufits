@@ -17,6 +17,12 @@
                     {{ $label }} <small>{{ $counts[$key] ?? 0 }}</small>
                 </a>
             @endforeach
+            @if (($counts['pending'] ?? 0) > 0)
+                <form method="post" action="{{ route('themes.approve-pending') }}" style="display:inline" onsubmit="return confirm('Duyệt tất cả {{ $counts['pending'] }} hook đang chờ duyệt?')">
+                    @csrf
+                    <button class="btn btn--primary">Duyệt hết {{ $counts['pending'] }} hook chờ duyệt</button>
+                </form>
+            @endif
         </div>
     </section>
 
@@ -39,7 +45,13 @@
                     <input name="name" value="{{ $theme->name }}" required maxlength="255" aria-label="Tên chủ đề">
                     <input name="note" value="{{ $theme->note }}" placeholder="Ghi chú" aria-label="Ghi chú" class="theme__note">
                     <button class="btn">Lưu</button>
+                    @if ($theme->hooks->where('status', 'pending')->isNotEmpty())
+                        <button class="btn btn--primary" form="duyet-{{ $theme->id }}">Duyệt hết hook chờ duyệt</button>
+                    @endif
                     <button class="btn btn--danger" form="xoa-{{ $theme->id }}" onclick="return confirm('Xoá chủ đề và mọi hook của nó?')">Xoá chủ đề</button>
+                </form>
+                <form method="post" action="{{ route('themes.approve-pending', ['theme' => $theme->id]) }}" id="duyet-{{ $theme->id }}" hidden>
+                    @csrf
                 </form>
                 <form method="post" action="{{ route('themes.destroy', $theme) }}" id="xoa-{{ $theme->id }}" hidden>
                     @csrf

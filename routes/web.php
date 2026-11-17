@@ -46,6 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::post('themes', [OutfitThemeController::class, 'store'])->name('themes.store');
     Route::put('themes/{theme}', [OutfitThemeController::class, 'update'])->name('themes.update')->whereNumber('theme');
     Route::delete('themes/{theme}', [OutfitThemeController::class, 'destroy'])->name('themes.destroy')->whereNumber('theme');
+    Route::post('themes/approve-pending', [OutfitThemeController::class, 'approvePending'])->name('themes.approve-pending');
     Route::post('themes/{theme}/hooks', [OutfitThemeController::class, 'storeHook'])->name('themes.hooks.store')->whereNumber('theme');
     Route::put('theme-hooks/{hook}', [OutfitThemeController::class, 'updateHook'])->name('theme-hooks.update')->whereNumber('hook');
     Route::delete('theme-hooks/{hook}', [OutfitThemeController::class, 'destroyHook'])->name('theme-hooks.destroy')->whereNumber('hook');

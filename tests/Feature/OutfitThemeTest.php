@@ -73,6 +73,26 @@ class OutfitThemeTest extends TestCase
         $this->assertSame([0, 0], [OutfitTheme::query()->count(), OutfitThemeHook::query()->count()]);
     }
 
+    public function test_approve_all_pending_hooks_of_owner_or_one_theme(): void
+    {
+        $user = User::factory()->create();
+        $a = $user->outfitThemes()->create(['name' => 'A']);
+        $b = $user->outfitThemes()->create(['name' => 'B']);
+        $a->hooks()->create(['body' => 'a1', 'tags' => 'x']);
+        $a->hooks()->create(['body' => 'a2', 'tags' => 'x', 'status' => OutfitThemeHook::REJECTED]);
+        $b->hooks()->create(['body' => 'b1', 'tags' => 'x']);
+        $foreign = User::factory()->create()->outfitThemes()->create(['name' => 'C'])->hooks()->create(['body' => 'c1', 'tags' => 'x']);
+        $this->actingAs($user)->get('/themes')->assertSee('Duyệt hết 2 hook chờ duyệt');
+
+        $this->actingAs($user)->post('/themes/approve-pending?theme='.$b->id)->assertRedirect();
+        $this->assertSame(['pending', 'rejected', 'approved'], OutfitThemeHook::query()->whereIn('outfit_theme_id', [$a->id, $b->id])->orderBy('id')->pluck('status')->all());
+        $this->actingAs($user)->post('/themes/approve-pending')->assertRedirect()->assertSessionHas('status', 'Đã duyệt 1 hook.');
+        $this->assertSame(['approved', 'rejected', 'approved'], OutfitThemeHook::query()->whereIn('outfit_theme_id', [$a->id, $b->id])->orderBy('id')->pluck('status')->all());
+        $this->assertSame(OutfitThemeHook::PENDING, $foreign->fresh()->status);
+        $this->actingAs($user)->post('/themes/approve-pending?theme='.$foreign->outfit_theme_id)->assertSessionHas('status', 'Đã duyệt 0 hook.');
+        $this->assertSame(OutfitThemeHook::PENDING, $foreign->fresh()->status);
+    }
+
     public function test_api_upserts_hooks_without_changing_status_and_filters_by_status(): void
     {
         $user = User::factory()->create();

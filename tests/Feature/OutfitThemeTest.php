@@ -101,4 +101,21 @@ class OutfitThemeTest extends TestCase
         $this->withToken(User::factory()->create()->issueApiToken())->getJson('/api/themes')->assertOk()->assertJsonCount(0, 'data');
         $this->flushHeaders()->getJson('/api/themes')->assertUnauthorized();
     }
+
+    /** "ễ" = E1 BB 85: preg_split('/\R/') không có /u cắt ở byte 0x85 -> JSON lỗi "Malformed UTF-8" (prod 2026-11-17). */
+    public function test_vietnamese_hooks_with_byte_0x85_stay_intact(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->issueApiToken();
+        $hooks = ['*Trễ vai* nhẹ thôi là đủ hút mắt', 'Mùa đông dễ mặc nhất'];
+        $this->withToken($token)->postJson('/api/themes', ['name' => 'Áo trễ vai', 'tags' => 'aotrevai', 'hooks' => $hooks])
+            ->assertCreated()->assertJsonPath('data.hooks', $hooks);
+        $this->withToken($token)->postJson('/api/themes', ['name' => 'Áo len', 'tags' => 'aolen', 'hooks' => implode("\n", $hooks)])
+            ->assertCreated()->assertJsonPath('data.hooks', $hooks);
+        $this->withToken($token)->getJson('/api/themes')->assertOk()->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.hooks', $hooks);
+        $this->actingAs($user)->post('/themes', ['name' => 'Web ễ', 'tags' => 'Trễ vai', 'hooks' => "Dễ mặc\nTrễ vai"])->assertRedirect();
+        $this->assertSame(['Dễ mặc', 'Trễ vai'], $user->outfitThemes()->where('name', 'Web ễ')->sole()->hookList());
+        $this->actingAs($user)->get('/themes')->assertOk()->assertSee('Dễ mặc');
+    }
 }

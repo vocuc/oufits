@@ -45,7 +45,7 @@ class OutfitTheme extends Model
     /** "#chanvaymini, Tất cao cổ" -> "chanvaymini tatcaoco" (chuẩn hoá như hashtag outfit, bỏ trùng). */
     public static function normalizeTags(string|array|null $input): string
     {
-        return collect(is_array($input) ? $input : preg_split('/[\s,]+/', (string) $input))
+        return collect(is_array($input) ? $input : preg_split('/[\s,]+/u', (string) $input))
             ->map(fn ($t) => Hashtag::normalize((string) $t))
             ->filter()->unique()->implode(' ');
     }
@@ -53,7 +53,7 @@ class OutfitTheme extends Model
     /** Mỗi dòng một hook: bỏ dòng trống, khoảng trắng thừa, dòng trùng. */
     public static function normalizeHooks(string|array|null $input): string
     {
-        return collect(is_array($input) ? $input : preg_split('/\R/', (string) $input))
+        return collect(is_array($input) ? $input : preg_split('/\R/u', (string) $input))
             ->map(fn ($h) => trim(preg_replace('/\s+/u', ' ', (string) $h)))
             ->filter()->unique()->implode("\n");
     }
@@ -67,7 +67,8 @@ class OutfitTheme extends Model
     /** @return list<string> */
     public function hookList(): array
     {
-        return array_values(array_filter(preg_split('/\R/', (string) $this->hooks)));
+        // /u bắt buộc: thiếu nó \R khớp byte 0x85 nằm trong chữ "ễ" (E1 BB 85) -> cắt giữa chữ, UTF-8 hỏng
+        return array_values(array_filter(preg_split('/\R/u', (string) $this->hooks)));
     }
 
     /** Số outfit của chủ shop có ĐỦ hashtag của chủ đề và có ảnh gốc (worker chỉ dùng outfit có ảnh gốc). */

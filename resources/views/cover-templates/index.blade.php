@@ -45,6 +45,9 @@
                         <div class="ctpl__title">
                             <b>{{ $t->code }} · {{ $t->name }}</b>
                             <span class="ctpl__status ctpl__status--{{ $t->status }}">{{ $t->statusLabel() }}</span>
+                            @if ($page['lot_type'] ?? false)
+                                <span class="chip">Dùng cho: {{ $t->lotTypeLabel() }}</span>
+                            @endif
                         </div>
                         {{-- Mẫu bìa chỉ quyết định cách trình bày hook; kiểu / chủ đề hook do Claude tự chọn theo ảnh bìa --}}
                         @if ($t->hook_type && $route !== 'cover-templates')
@@ -68,6 +71,15 @@
                         @csrf
                         @method('PUT')
                         <textarea name="request" rows="7" placeholder="Ghi yêu cầu cho mẫu này...">{{ $t->request }}</textarea>
+                        @if ($page['lot_type'] ?? false)
+                            <label class="ctpl__lot">Dùng cho
+                                <select name="lot_type">
+                                    @foreach (\App\Models\CoverTemplate::LOT_TYPES as $key => $label)
+                                        <option value="{{ $key }}" @selected(($t->lot_type ?? 'all') === $key)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                        @endif
                         <div class="ctpl__save">
                             <button class="btn" name="status" value="" title="Chỉ lưu yêu cầu">Lưu yêu cầu</button>
                             @if ($t->status !== \App\Models\CoverTemplate::APPROVED)

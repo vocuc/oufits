@@ -141,7 +141,9 @@ class OutfitThemeTest extends TestCase
     /** Migration tách hook: mỗi dòng của outfit_themes.hooks cũ -> 1 hook (tags + trạng thái của chủ đề), "ễ" không hỏng. */
     public function test_migration_moves_old_theme_hooks_into_rows(): void
     {
-        $this->artisan('migrate:rollback', ['--step' => 1])->assertSuccessful();
+        // Lùi đúng migration tách hook (không dùng --step: migration mới hơn sẽ bị lùi thay)
+        $this->artisan('migrate:rollback', ['--path' => 'database/migrations/2026_11_17_000003_create_outfit_theme_hooks_table.php'])
+            ->assertSuccessful();
         $user = User::factory()->create();
         DB::table('outfit_themes')->insert([
             'user_id' => $user->id, 'name' => 'Áo trễ vai', 'tags' => 'aotrevai', 'status' => 'approved',

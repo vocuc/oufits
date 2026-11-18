@@ -263,6 +263,8 @@ main { padding-top: 20px; padding-bottom: 48px; }
 .ctpl__req { display: grid; gap: 8px; align-content: start; }
 .ctpl__req textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
 .ctpl__save { display: flex; flex-wrap: wrap; gap: 8px; }
+.ctpl__lot { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.ctpl__lot select { flex: 1; min-width: 0; }
 @media (max-width: 760px) {
     .ctpl__head { display: none; }
     .ctpl__row { grid-template-columns: 1fr; }

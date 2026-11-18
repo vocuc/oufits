@@ -87,4 +87,29 @@ class CoverTemplateTest extends TestCase
         $this->actingAs($other)->get('/cover-templates')->assertDontSee('Tạp chí');
         $this->assertSame('Đổi màu hồng đậm', $t->fresh()->request);
     }
+
+    public function test_owner_picks_lot_type_on_page_and_api_cannot_change_it(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->issueApiToken();
+        $this->upsert($token, ['code' => '17', 'name' => 'TikTok'])->assertCreated()->assertJsonPath('data.lot_type', 'all');
+        $t = CoverTemplate::query()->sole();
+
+        $this->actingAs($user)->get('/cover-templates')->assertOk()->assertSee('Dùng cho: Cả hai loại lô')
+            ->assertSee('Lô không sản phẩm');
+        $this->actingAs($user)->put("/cover-templates/{$t->id}", ['request' => '', 'status' => '', 'lot_type' => 'no_product'])
+            ->assertRedirect();
+        $this->assertSame('no_product', $t->fresh()->lot_type);
+        $this->assertSame('pending', $t->fresh()->status);
+        $this->actingAs($user)->get('/cover-templates')->assertSee('Dùng cho: Lô không sản phẩm');
+
+        // API upsert theo code không đổi lot_type (chỉ chủ shop chọn trên web); GET trả lot_type cho worker
+        $this->upsert($token, ['code' => '17', 'name' => 'TikTok v2', 'lot_type' => 'product'])->assertOk()
+            ->assertJsonPath('data.lot_type', 'no_product');
+        $this->withToken($token)->getJson('/api/cover-templates')->assertJsonPath('data.0.lot_type', 'no_product');
+
+        $this->actingAs($user)->put("/cover-templates/{$t->id}", ['lot_type' => 'xyz'])->assertSessionHasErrors('lot_type');
+        // Trang Mẫu ảnh outfit không có lựa chọn này
+        $this->actingAs($user)->get('/outfit-layouts')->assertOk()->assertDontSee('Dùng cho:');
+    }
 }

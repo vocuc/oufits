@@ -23,6 +23,7 @@ class CoverTemplateController extends Controller
             'title' => 'Mẫu ảnh bìa',
             'intro' => 'Các cách làm ảnh bìa cho lô phối đồ A51. Worker phối đồ chỉ làm bìa theo mẫu đã duyệt và đọc cột "Yêu cầu" của mẫu đó trước khi làm.',
             'show_prompt' => false,
+            'lot_type' => true, // chọn mẫu dùng cho lô có / không sản phẩm (chỉ Mẫu ảnh bìa)
         ];
     }
 
@@ -41,17 +42,21 @@ class CoverTemplateController extends Controller
         ]);
     }
 
-    /** Lưu yêu cầu và / hoặc trạng thái duyệt của một mẫu (cùng một form). */
+    /** Lưu yêu cầu, loại lô dùng mẫu (chỉ Mẫu ảnh bìa) và / hoặc trạng thái duyệt của một mẫu (cùng một form). */
     public function update(Request $request, string $template)
     {
         $t = $this->find($request, $template);
         $data = $request->validate([
             'request' => ['nullable', 'string', 'max:5000'],
             'status' => ['nullable', Rule::in(array_keys(CoverTemplate::STATUSES))],
+            'lot_type' => ['nullable', Rule::in(array_keys(CoverTemplate::LOT_TYPES))],
         ]);
         $text = trim((string) ($data['request'] ?? '')) ?: null;
         if ($text !== $t->request) {
             $t->fill(['request' => $text, 'request_updated_at' => now()]);
+        }
+        if (! empty($data['lot_type']) && ($this->page()['lot_type'] ?? false)) {
+            $t->fill(['lot_type' => $data['lot_type']]);
         }
         if (! empty($data['status']) && $data['status'] !== $t->status) {
             $t->fill(['status' => $data['status'], 'reviewed_at' => now()]);

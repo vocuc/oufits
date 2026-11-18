@@ -22,6 +22,9 @@ class CoverTemplate extends Model
 
     public const STATUSES = [self::PENDING => 'Chờ duyệt', self::APPROVED => 'Đã duyệt', self::REJECTED => 'Bỏ'];
 
+    /** Mẫu bìa dùng cho loại lô nào (cột lot_type, chỉ bảng cover_templates; chỉ chủ shop chọn trên web, API không đổi). */
+    public const LOT_TYPES = ['all' => 'Cả hai loại lô', 'product' => 'Lô có sản phẩm', 'no_product' => 'Lô không sản phẩm'];
+
     /** Tiền tố route web (index / update / image) + thư mục ảnh trên disk. */
     public const ROUTE = 'cover-templates';
 
@@ -55,6 +58,11 @@ class CoverTemplate extends Model
         if ($old) {
             $disk->delete($old);
         }
+    }
+
+    public function lotTypeLabel(): string
+    {
+        return self::LOT_TYPES[$this->lot_type ?? 'all'] ?? self::LOT_TYPES['all'];
     }
 
     public function statusLabel(): string

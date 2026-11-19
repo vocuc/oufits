@@ -126,7 +126,8 @@
     @if ($outfits->isEmpty())
         <div class="empty">Không có outfit nào có đủ các hashtag này.</div>
     @else
-        <form method="get" action="{{ route('outfits.compose') }}" id="pick-form">
+        {{-- Thẻ outfit có form Xóa bên trong nên KHÔNG đặt trong form ghép (form lồng nhau làm trình duyệt đóng form sớm,
+             script dưới lỗi và không tải thêm khi cuộn). Ô chọn trong thẻ gắn vào form ghép bằng form="pick-form". --}}
         <div class="grid" data-outfit-grid>
             @include('outfits._cards')
         </div>
@@ -140,22 +141,21 @@
             </div>
         @endif
 
-        <div class="composebar" hidden>
+        <form method="get" action="{{ route('outfits.compose') }}" id="pick-form" class="composebar" hidden>
             <span><b data-pick-count>0</b> outfit đã chọn</span>
             <button class="btn btn--primary">Ghép prompt →</button>
-        </div>
         </form>
 
         <script>
             (() => {
-                const form = document.getElementById("pick-form");
-                const bar = form.querySelector(".composebar");
+                const bar = document.getElementById("pick-form");
                 const sync = () => {
-                    const n = form.querySelectorAll("input[name=\"ids[]\"]:checked").length;
+                    const n = document.querySelectorAll("input[name=\"ids[]\"][form=\"pick-form\"]:checked").length;
                     bar.hidden = n === 0;
                     bar.querySelector("[data-pick-count]").textContent = n;
                 };
-                form.addEventListener("change", sync);
+                // Ô chọn nằm trong lưới (ngoài form), cả thẻ tải thêm: nghe ở lưới
+                document.querySelector("[data-outfit-grid]").addEventListener("change", sync);
                 sync();
 
                 // Cuộn gần cuối trang thì tải thêm outfit

@@ -38,6 +38,10 @@
                     </a>
                     @if ($render->outfit)
                         <a href="{{ route('renders.index', ['outfit' => $render->outfit_id]) }}" class="card__title">{{ $render->outfit->title }}</a>
+                        {{-- Id outfit gốc: bấm sang trang chi tiết outfit --}}
+                        <p style="margin:2px 0">
+                            <a href="{{ route('outfits.show', $render->outfit_id) }}" title="Xem chi tiết outfit">Outfit #{{ $render->outfit_id }} →</a>
+                        </p>
                     @endif
                     <p class="muted">
                         @if ($render->a51_product_id)
@@ -66,6 +70,6 @@
                 </article>
             @endforeach
         </div>
-        <div style="margin:18px 0">{{ $renders->links() }}</div>
+        <div style="margin:18px 0">{{ $renders->links('partials.pagination') }}</div>
     @endif
 @endsection

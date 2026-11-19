@@ -22,7 +22,8 @@
                 <span class="card__nocover">Chưa có ảnh bìa</span>
             @endif
         </a>
-        <label class="pick"><input type="checkbox" name="ids[]" value="{{ $outfit->id }}"> Chọn để ghép</label>
+        {{-- form="pick-form": thẻ nằm ngoài form ghép (trong thẻ có form Xóa, form không được lồng nhau) --}}
+        <label class="pick"><input type="checkbox" name="ids[]" value="{{ $outfit->id }}" form="pick-form"> Chọn để ghép</label>
         <a href="{{ route('outfits.show', $outfit) }}" class="card__title">@unless ($outfit->is_public)🔒 @endunless{{ $outfit->title }}</a>
         @if ($outfit->style)
             <p class="muted">{{ $outfit->style }}</p>

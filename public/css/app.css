@@ -91,6 +91,12 @@ main { padding-top: 20px; padding-bottom: 48px; }
 .chip:hover { border-color: var(--accent); }
 .chip.is-active { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .chip.is-active small { color: inherit; opacity: .8; }
+.chip.is-disabled { color: var(--muted); opacity: .5; pointer-events: none; }
+
+/* Phân trang (partials/pagination) */
+.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin: 18px 0; }
+.pager__dots { color: var(--muted); padding: 0 4px; }
+.pager__info { flex-basis: 100%; text-align: center; font-size: 12px; margin-top: 4px; }
 
 .count { margin: 18px 0 10px; font-size: 13px; }
 .empty { padding: 48px 16px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius); }

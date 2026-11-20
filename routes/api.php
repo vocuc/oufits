@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\CoverTemplateApiController;
 use App\Http\Controllers\Api\FashionModelApiController;
 use App\Http\Controllers\Api\GuidelineApiController;
 use App\Http\Controllers\Api\OutfitApiController;
+use App\Http\Controllers\Api\OutfitHashtagApiController;
 use App\Http\Controllers\Api\OutfitLayoutApiController;
 use App\Http\Controllers\Api\OutfitThemeApiController;
 use App\Http\Controllers\Api\RenderApiController;
@@ -22,6 +23,9 @@ Route::middleware(EnsureApiToken::class)->group(function () {
     Route::get('outfits/{outfit}/cover', [OutfitApiController::class, 'coverFile']);
     Route::put('outfits/{outfit}/hashtags', [OutfitApiController::class, 'hashtags']);
     Route::get('outfit-shares', [OutfitApiController::class, 'shares']);
+    // Hashtag outfit của chủ token: lệnh /lap-ke-hoach (A51) chọn hashtag chủ đề bài lookbook
+    Route::get('outfit-hashtags', [OutfitHashtagApiController::class, 'index']);
+    Route::get('outfit-hashtags/count', [OutfitHashtagApiController::class, 'count']);
     Route::get('compose', [OutfitApiController::class, 'compose']);
 
     // Kho kiến thức phối đồ Claude học được (D:\FlowKit\a51-skills\outfit-video\thiet-ke-kien-thuc.txt)

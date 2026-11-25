@@ -88,11 +88,13 @@ class StylingRuleController extends Controller
             ->with('status', $rule->is_confirmed ? 'Đã duyệt luật.' : 'Đã bỏ duyệt luật (không còn lọc outfit).');
     }
 
-    /** Chỉ xoá luật người dùng tự thêm; luật Claude / thống kê thì bỏ duyệt. */
+    /** Nguồn xoá được trên trang: luật người dùng tự thêm + luật Claude soạn (2026-11-25); luật thống kê / TikTok thì bỏ duyệt. */
+    public const DELETABLE_SOURCES = ['user', 'claude'];
+
     public function destroy(Request $request, StylingRule $rule)
     {
         $this->own($request, $rule);
-        abort_unless($rule->source === 'user', 403, 'Chỉ xoá được luật bạn tự thêm; luật khác hãy bỏ duyệt.');
+        abort_unless(in_array($rule->source, self::DELETABLE_SOURCES, true), 403, 'Luật thống kê / TikTok không xoá được, hãy bỏ duyệt.');
         $rule->delete();
 
         return redirect()->route('styling-rules.index')->with('status', 'Đã xoá luật.');

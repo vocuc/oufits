@@ -68,7 +68,7 @@
                                 <input type="hidden" name="is_confirmed" value="{{ $rule->is_confirmed ? 0 : 1 }}">
                                 <button class="btn {{ $rule->is_confirmed ? '' : 'btn--primary' }}">{{ $rule->is_confirmed ? 'Bỏ duyệt' : 'Duyệt' }}</button>
                             </form>
-                            @if ($rule->source === 'user')
+                            @if (in_array($rule->source, \App\Http\Controllers\StylingRuleController::DELETABLE_SOURCES, true))
                                 <form method="post" action="{{ route('styling-rules.destroy', $rule) }}" style="display:inline" onsubmit="return confirm('Xoá luật này?')">
                                     @csrf
                                     @method('DELETE')

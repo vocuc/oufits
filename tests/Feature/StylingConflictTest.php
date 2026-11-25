@@ -100,14 +100,24 @@ class StylingConflictTest extends TestCase
 
         $this->actingAs($user)->get('/styling-rules')->assertOk()->assertSee('Luật cấm phối')->assertSee('1 outfit vi phạm');
 
-        // Duyệt luật Claude soạn -> có hiệu lực; luật Claude không xoá được, chỉ bỏ duyệt
+        // Duyệt luật Claude soạn -> có hiệu lực
         $this->actingAs($user)->put("/styling-rules/{$claude->id}", ['is_confirmed' => 1])->assertRedirect();
         $this->assertTrue($claude->fresh()->is_confirmed);
-        $this->actingAs($user)->delete("/styling-rules/{$claude->id}")->assertForbidden();
         $this->actingAs($user)->delete("/styling-rules/{$rows[0]->id}")->assertRedirect();
         $this->assertCount(3, $user->stylingRules()->where('source', 'user')->get());
 
         // Luật của người khác -> 404
         $this->actingAs(User::factory()->create())->put("/styling-rules/{$claude->id}", ['is_confirmed' => 0])->assertNotFound();
+        $this->actingAs(User::factory()->create())->delete("/styling-rules/{$claude->id}")->assertNotFound();
+
+        // Xoá được luật Claude soạn; luật thống kê thì không (chỉ bỏ duyệt)
+        $stats = $this->avoid($user, 'giaysneaker', 'damdai', confirmed: false, dimension: 'bottom', source: 'ootd_stats');
+        // Nút Xoá: 3 luật bạn thêm + 1 luật Claude, không có ở luật thống kê
+        $html = $this->actingAs($user)->get('/styling-rules')->assertOk()->getContent();
+        $this->assertSame(4, substr_count($html, 'name="_method" value="DELETE"'));
+        $this->assertStringNotContainsString('styling-rules/'.$stats->id.'" style="display:inline" onsubmit', $html);
+        $this->actingAs($user)->delete("/styling-rules/{$claude->id}")->assertRedirect();
+        $this->assertNull($claude->fresh());
+        $this->actingAs($user)->delete("/styling-rules/{$stats->id}")->assertForbidden();
     }
 }

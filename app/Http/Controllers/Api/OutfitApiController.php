@@ -30,6 +30,9 @@ class OutfitApiController extends Controller
      *                           Danh sách tài khoản đã chia sẻ: GET /api/outfit-shares.
      * ?tags=thudong,giayboot -> chỉ outfit có ĐỦ các hashtag này.
      * ?limit=50&offset=0     -> phân trang (limit tối đa 200); meta.next_offset = null khi hết.
+     * ?rules=1               -> bỏ outfit vi phạm luật cấm phối đã duyệt của chủ token (Outfit::withoutStylingConflicts);
+     *   &shoe=depquai,depkep -> (cùng rules=1) loại giày sẽ vẽ thay: bỏ thêm outfit có món bị cấm với giày này.
+     *                           Mặc định KHÔNG lọc (skill tạo outfit dùng danh sách này để kiểm tra trùng).
      */
     public function index(Request $request): JsonResponse
     {
@@ -39,6 +42,8 @@ class OutfitApiController extends Controller
             'tags' => ['nullable', 'string', 'max:2000'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:'.self::MAX_LIMIT],
             'offset' => ['nullable', 'integer', 'min:0'],
+            'rules' => ['nullable', 'boolean'],
+            'shoe' => ['nullable', 'string', 'max:500'],
         ]);
         $limit = (int) $request->query('limit', self::DEFAULT_LIMIT);
         $offset = (int) $request->query('offset', 0);
@@ -57,6 +62,9 @@ class OutfitApiController extends Controller
         }
 
         $query->withAllHashtags($tags);
+        if ($request->boolean('rules')) {
+            $query->withoutStylingConflicts($user->id, explode(',', (string) $request->query('shoe', '')));
+        }
         $total = (clone $query)->count();
 
         $outfits = $query->with(['hashtags', 'user:id,name'])

@@ -10,6 +10,7 @@ use App\Http\Controllers\OutfitShareController;
 use App\Http\Controllers\OutfitThemeController;
 use App\Http\Controllers\RenderController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\StylingRuleController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -65,6 +66,11 @@ Route::middleware('auth')->group(function () {
     Route::post('guidelines', [GuidelineController::class, 'store'])->name('guidelines.store');
     Route::put('guidelines/{guideline}', [GuidelineController::class, 'update'])->name('guidelines.update');
     Route::delete('guidelines/{guideline}', [GuidelineController::class, 'destroy'])->name('guidelines.destroy');
+
+    Route::get('styling-rules', [StylingRuleController::class, 'index'])->name('styling-rules.index');
+    Route::post('styling-rules', [StylingRuleController::class, 'store'])->name('styling-rules.store');
+    Route::put('styling-rules/{rule}', [StylingRuleController::class, 'update'])->name('styling-rules.update')->whereNumber('rule');
+    Route::delete('styling-rules/{rule}', [StylingRuleController::class, 'destroy'])->name('styling-rules.destroy')->whereNumber('rule');
 
     Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::post('settings/token', [SettingsController::class, 'issueToken'])->name('settings.token');

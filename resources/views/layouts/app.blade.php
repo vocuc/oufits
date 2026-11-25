@@ -34,6 +34,7 @@
                             <a href="{{ route('themes.index') }}" class="account__item">Chủ đề</a>
                             <a href="{{ route('models.index') }}" class="account__item">Người mẫu</a>
                             <a href="{{ route('guidelines.index') }}" class="account__item">Quy tắc</a>
+                            <a href="{{ route('styling-rules.index') }}" class="account__item">Luật cấm phối</a>
                             <a href="{{ route('settings.edit') }}" class="account__item">Cài đặt</a>
                             <form method="post" action="{{ route('logout') }}">
                                 @csrf

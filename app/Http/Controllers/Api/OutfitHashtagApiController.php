@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
  * GET /api/outfit-hashtags?min=1&with_cover=1
  *   with_cover (mặc định 1): chỉ đếm outfit CÓ ẢNH GỐC (worker phối đồ chỉ dùng outfit có ảnh gốc).
  *   min: bỏ hashtag có ít hơn min outfit.
+ *   rules=1: không đếm outfit vi phạm luật cấm phối đã duyệt (như GET /api/outfits?rules=1).
  *   -> { data: [{ name, outfits }], meta: { outfits: tổng outfit được đếm } } (nhiều outfit trước)
  */
 class OutfitHashtagApiController extends Controller
@@ -25,12 +26,14 @@ class OutfitHashtagApiController extends Controller
         $data = $request->validate([
             'min' => ['nullable', 'integer', 'min:1'],
             'with_cover' => ['nullable', 'boolean'],
+            'rules' => ['nullable', 'boolean'],
         ]);
         $user = $request->user();
         $withCover = $request->boolean('with_cover', true);
         $min = (int) ($data['min'] ?? 1);
 
-        $outfits = Outfit::query()->where('user_id', $user->id)->when($withCover, fn ($q) => $q->whereNotNull('cover_path'));
+        $outfits = Outfit::query()->where('user_id', $user->id)->when($withCover, fn ($q) => $q->whereNotNull('cover_path'))
+            ->when($request->boolean('rules'), fn ($q) => $q->withoutStylingConflicts($user->id));
         $rows = DB::table('hashtag_outfit')
             ->join('hashtags', 'hashtags.id', '=', 'hashtag_outfit.hashtag_id')
             ->whereIn('hashtag_outfit.outfit_id', (clone $outfits)->select('id'))
@@ -48,16 +51,20 @@ class OutfitHashtagApiController extends Controller
     /**
      * Số outfit có ĐỦ các hashtag (để lệnh kiểm tra trước 1 bộ hashtag chủ đề).
      * GET /api/outfit-hashtags/count?tags=henho,sangchanh&with_cover=1 (phân cách bằng dấu phẩy) -> { data: { tags, outfits } }
+     * rules=1 [&shoe=depquai]: không đếm outfit vi phạm luật cấm phối đã duyệt (như GET /api/outfits?rules=1&shoe=).
      */
     public function count(Request $request): JsonResponse
     {
-        $request->validate(['tags' => ['required', 'string', 'max:500'], 'with_cover' => ['nullable', 'boolean']]);
+        $request->validate(['tags' => ['required', 'string', 'max:500'], 'with_cover' => ['nullable', 'boolean'],
+            'rules' => ['nullable', 'boolean'], 'shoe' => ['nullable', 'string', 'max:500']]);
         // Phân cách bằng dấu phẩy (hashtag gõ có dấu cách như "Hẹn hò" vẫn ra 1 hashtag "henho")
         $tags = collect(explode(',', (string) $request->query('tags')))
             ->map(fn ($t) => Hashtag::normalize($t))->filter()->unique()->values()->all();
         $count = Outfit::query()->where('user_id', $request->user()->id)
             ->when($request->boolean('with_cover', true), fn ($q) => $q->whereNotNull('cover_path'))
-            ->withAllHashtags($tags)->count();
+            ->withAllHashtags($tags)
+            ->when($request->boolean('rules'), fn ($q) => $q->withoutStylingConflicts($request->user()->id, explode(',', (string) $request->query('shoe', ''))))
+            ->count();
 
         return response()->json(['data' => ['tags' => $tags, 'outfits' => $count]]);
     }

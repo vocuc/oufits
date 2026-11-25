@@ -88,6 +88,29 @@ class Outfit extends Model
         return $query;
     }
 
+    /**
+     * Bỏ outfit vi phạm luật cấm phối đã duyệt của $ruleOwnerId (StylingRule::forbiddenPairs, 2026-11-25):
+     *  - outfit TỰ mâu thuẫn: có hashtag giày X và hashtag món bị cấm với X (vd depquai + aomangto);
+     *  - $shoes (loại giày sẽ vẽ thay, lô theo sản phẩm): bỏ thêm outfit có món bị cấm với các giày này.
+     *
+     * @param  string[]  $shoes
+     */
+    public function scopeWithoutStylingConflicts(Builder $query, int $ruleOwnerId, array $shoes = []): Builder
+    {
+        $pairs = StylingRule::forbiddenPairs($ruleOwnerId);
+        $shoes = array_values(array_filter(array_map(fn ($s) => Hashtag::normalize((string) $s), $shoes)));
+        $has = fn (string $tag) => fn (Builder $q) => $q->where('name', $tag);
+        foreach ($pairs as [$shoe, $tag]) {
+            if (in_array($shoe, $shoes, true)) {
+                $query->whereDoesntHave('hashtags', $has($tag));
+            } else {
+                $query->whereNot(fn (Builder $q) => $q->whereHas('hashtags', $has($shoe))->whereHas('hashtags', $has($tag)));
+            }
+        }
+
+        return $query;
+    }
+
     /** Nhận chuỗi "thudong, #vay aokhoac" -> gắn hashtag (tạo mới nếu chưa có). */
     public function syncHashtags(string|array $input): void
     {
